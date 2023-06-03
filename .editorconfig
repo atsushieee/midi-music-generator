@@ -1,0 +1,13 @@
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+# No whitespace at the end of line
+trim_trailing_whitespace = true
+# The files are utf-8 encoded
+charset = utf-8
+
+[Makefile]
+indent_style = tab
+indent_size = 8
