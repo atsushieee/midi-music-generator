@@ -9,6 +9,7 @@ packages = [{include = "generative_music"}]
 [tool.poetry.dependencies]
 python = ">=3.9.0,<3.10.0"
 tensorflow = ">=2.8.0,<2.9.0"
+numpy = "1.23.5"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.10.0"
@@ -22,9 +23,13 @@ toml = "^0.10.2"
 
 [tool.flake8]
 max-line-length = 88
+extend-ignore = "E501"
 
 [tool.black]
 line-length = 88
+
+[tool.mypy]
+ignore_missing_imports = "True"
 
 
 [build-system]
