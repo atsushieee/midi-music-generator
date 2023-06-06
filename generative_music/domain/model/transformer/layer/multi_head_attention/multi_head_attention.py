@@ -1,8 +1,19 @@
 """Multi-Head Attention module for the Transformer model.
 
-This module implements the Multi-Head Attention mechanism,
-which calculates the attention scores
-and applies the attention mechanism to multiple attention heads.
+This module consists of multiple parallel attention layers,
+each with its own set of learnable parameters.
+It is responsible for capturing different aspects of the input sequence's relationships,
+both local and global, by processing the input sequence through multiple attention heads.
+
+Each attention head computes the attention scores
+and applies the attention mechanism independently,
+allowing the model to focus on different parts of the input sequence simultaneously.
+The outputs of these attention heads are then concatenated
+and linearly transformed to produce the final output.
+
+The Multi-Head Attention module enables the model to better understand complex relationships
+within the input sequence and improve its ability
+to generalize across different input sequences by capturing various aspects of the data.
 """
 from typing import Optional
 

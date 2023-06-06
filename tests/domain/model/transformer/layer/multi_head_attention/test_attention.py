@@ -41,8 +41,8 @@ class TestAttention:
     are equal to the expected tensors, both with and without dropout applied.
     """
 
-    @pytest.fixture
-    def init_module(self):
+    @pytest.fixture(autouse=True)
+    def setup_input_tensors(self):
         """Initialize the input tensors for the attention layer tests.
 
         This fixture creates predefined query, key, and value tensors.
@@ -53,7 +53,6 @@ class TestAttention:
         self.key = tf.constant([[[2, 0, 1, 1], [0, 3, 1, 2]]], dtype=tf.float32)
         self.value = tf.constant([[[0, 6, 0, 3], [2, 0, 9, 1]]], dtype=tf.float32)
 
-    @pytest.mark.usefixtures("init_module")
     @pytest.mark.parametrize(
         "attention_weights_expected, output_expected, mask", test_data
     )
@@ -97,7 +96,6 @@ class TestAttention:
             atol=1e-6,
         )
 
-    @pytest.mark.usefixtures("init_module")
     @pytest.mark.parametrize("attention_weights_expected, _, mask", test_data)
     def test_attention_with_dropout(self, attention_weights_expected, _, mask):
         """Test the attention layer with dropout applied.

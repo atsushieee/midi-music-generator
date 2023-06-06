@@ -13,32 +13,22 @@ class Attention(tf.keras.layers.Layer):
 
     It takes three inputs, query, key, and value, computes the attention weights,
     and applies them to the value to produce the attention output.
+    An optional mask input can also be provided to selectively ignore certain positions
+    in the input sequences during the attention computation.
     """
 
-    def __init__(self, dropout_rate: Optional[float] = None, **kwargs):
+    def __init__(self, dropout_rate: Optional[float] = None):
         """Initialize the Attention class.
 
         Args:
             dropout_rate (float, optional):
                 The dropout rate to be applied to the attention weights.
                 Defaults to None, meaning no dropout is applied.
-            **kwargs:
-                Additional keyword arguments to be passed to the constructor
-                of the parent class, tf.keras.layers.Layer.
         """
-        super(Attention, self).__init__(**kwargs)
+        super(Attention, self).__init__()
         self.dropout_rate = dropout_rate
-
-    def build(self, input_shape: Tuple[int, ...]):
-        """Build the Attention layer based on the input shape.
-
-        Args:
-            input_shape (Tuple[int, ...]):
-                The shape of the input to the Attention layer.
-        """
         if self.dropout_rate is not None:
             self.dropout = tf.keras.layers.Dropout(self.dropout_rate)
-        super(Attention, self).build(input_shape)
 
     def call(
         self,
@@ -46,24 +36,37 @@ class Attention(tf.keras.layers.Layer):
         key: tf.Tensor,
         value: tf.Tensor,
         mask: Optional[tf.Tensor] = None,
+        training: Optional[bool] = None,
     ) -> Tuple[tf.Tensor, tf.Tensor]:
         """Compute Scaled Dot-Product Attention.
 
         Args:
             query (tf.Tensor):
-                Query tensor with shape (batch_size, seq_len, depth_q).
+                Query tensor with shape (batch_size, seq_len, dim_q)
+                or (batch_size, num_heads, seq_len, dim_q / num_heads)
+                for Multi-head Attention.
             key (tf.Tensor):
-                Key tensor with shape (batch_size, seq_len, depth_k).
+                Key tensor with shape (batch_size, seq_len, dim_k)
+                or (batch_size, num_heads, seq_len, dim_k / num_heads)
+                for Multi-head Attention.
             value (tf.Tensor):
-                Value tensor with shape (batch_size, seq_len, depth_v).
+                Value tensor with shape (batch_size, seq_len, dim_v)
+                or (batch_size, num_heads, seq_len, dim_v / num_heads)
+                for Multi-head Attention.
             mask (tf.Tensor, optional):
                 Mask tensor with shape (batch_size, seq_len, seq_len).
                 If provided, the part of attention scores will be masked.
                 Defaults to None.
+            training (bool, optional):
+                True if the model is in training mode, False if in inference mode.
+                If `None`, the mode will be inferred from `self.training`.
+                Default is None.
 
         Returns:
             Tuple[tf.Tensor, tf.Tensor]:
-                The output tensor with shape (batch_size, seq_len, depth_v)
+                The output tensor with shape (batch_size, seq_len, dim_v)
+                or (batch_size, num_heads, seq_len, dim_v / num_heads)
+                for Multi-head Attention,
                 and the attention weights tensor with shape
                 (batch_size, seq_len, seq_len).
         """
@@ -76,6 +79,6 @@ class Attention(tf.keras.layers.Layer):
         attention_weights = tf.nn.softmax(scores, axis=-1)
 
         if self.dropout_rate is not None:
-            attention_weights = self.dropout(attention_weights)
+            attention_weights = self.dropout(attention_weights, training=training)
 
         return tf.matmul(attention_weights, value), attention_weights

@@ -19,7 +19,7 @@ class TestMultiHeadAttention:
     """
 
     @pytest.fixture(autouse=True)
-    def init_module(self):
+    def setup_multi_head_attention(self):
         """Initialize the multi-head attention layer tests.
 
         This fixture creates predefined number of heads and dimension of query, key and value.
