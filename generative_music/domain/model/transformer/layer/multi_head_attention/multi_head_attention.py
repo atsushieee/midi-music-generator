@@ -36,28 +36,32 @@ class MultiHeadedAttention(tf.keras.layers.Layer):
     This means that even if the dimensionality of the embedding layer output
     and the query, key, and value inputs are different,
     this class can be used without any issues.
+    However, due to the need for residual connections,
+    the input and output dimensions are essentially constant for all layers.
+    This means that the dimensionality of the embedding layer output
+    (referred to as d_model in the paper) is maintained throughout the model.
     """
 
-    def __init__(self, num_heads: int, dim_qkv: int, attention: Attention):
+    def __init__(self, num_heads: int, d_model: int, attention: Attention):
         """Initialize the MultiHeadedAttention class.
 
         Args:
             num_heads (int): The number of attention heads.
-            dim_qkv (int):
+            d_model (int):
                 The common dimensionality of the query, key, and value vectors.
                 Note that this implementation assumes that the dimensions
-                of query, key, and value are the same.
-                Ideally, dim_qkv should be set during the build process,
+                of query, key, value and output are the same.
+                Ideally, d_model should be set during the build process,
                 but since the input of the first layer comes from
                 the output of the embedding layer
                 and may have different dimensions, it is set during instantiation.
             attention (Attention): The attention mechanism to be used.
         """
         super(MultiHeadedAttention, self).__init__()
-        assert dim_qkv % num_heads == 0
-        self.dim_per_head = dim_qkv // num_heads
+        assert d_model % num_heads == 0
+        self.dim_per_head = d_model // num_heads
         self.num_heads = num_heads
-        self.linears = [tf.keras.layers.Dense(dim_qkv) for _ in range(4)]
+        self.linears = [tf.keras.layers.Dense(d_model) for _ in range(4)]
         self.attention = attention
 
     def split_heads(self, x: tf.Tensor, batch_size: int) -> tf.Tensor:
@@ -89,14 +93,20 @@ class MultiHeadedAttention(tf.keras.layers.Layer):
                 Query tensor with shape (batch_size, seq_len, dim_embed or dim_q).
                 In the first layer, the dimension is dim_embed,
                 while in the subsequent layers, it is dim_q.
+                However, due to the need for residual connections,
+                the dimensions are essentially the same for all layers.(d_model)
             key (tf.Tensor):
                 Key tensor with shape (batch_size, seq_len, dim_embed or dim_k).
                 In the first layer, the dimension is dim_embed,
                 while in the subsequent layers, it is dim_k.
+                However, due to the need for residual connections,
+                the dimensions are essentially the same for all layers.(d_model)
             value (tf.Tensor):
                 Value tensor with shape (batch_size, seq_len, dim_embed or dim_v).
                 In the first layer, the dimension is dim_embed,
                 while in the subsequent layers, it is dim_v.
+                However, due to the need for residual connections,
+                the dimensions are essentially the same for all layers.(d_model)
             mask (tf.Tensor, optional):
                 Mask tensor with shape (batch_size, seq_len, seq_len).
                 If provided, the part of attention scores will be masked.
@@ -104,7 +114,7 @@ class MultiHeadedAttention(tf.keras.layers.Layer):
 
         Returns:
             tf.Tensor:
-                The output tensor with shape (batch_size, seq_len, dim_v)
+                The output tensor with shape (batch_size, seq_len, d_model)
                 after applying multi-head attention.
         """
         batch_size = tf.shape(query)[0]
