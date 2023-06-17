@@ -2,7 +2,8 @@
 import pytest
 import tensorflow as tf
 
-from generative_music.domain.model.transformer.layer.embedding import Embedding
+from generative_music.domain.model.transformer.layer.input_embedding.embedding import \
+    Embedding
 
 
 class TestEmbedding:

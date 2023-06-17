@@ -10,7 +10,6 @@ the Transformer model can better understand the structure of the input sequence
 and generalize across different input sequences.
 """
 import math
-from typing import Optional
 
 import numpy as np
 import tensorflow as tf
@@ -27,21 +26,18 @@ class PositionalEncoding(tf.keras.layers.Layer):
     making it easier to capture both local and global relationships between tokens.
 
     The PositionalEncoding layer computes the positional encodings
-    and adds them to the input embeddings. It also includes dropout for regularization.
+    and adds them to the input embeddings.
     """
 
-    def __init__(self, embedding_dim: int, dropout_rate: float, max_len: int = 5000):
+    def __init__(self, embedding_dim: int, max_len: int = 5000):
         """Initialize the Embedding class.
 
         Args:
             embedding_dim (int): The dimensionality of the embedding vectors.
-            dropout_rate (float):
-                The dropout rate to be applied after adding positional encoding.
             max_len (int, optional):
                 The maximum length of the input sequences. Default is 5000.
         """
         super(PositionalEncoding, self).__init__()
-        self.dropout = tf.keras.layers.Dropout(dropout_rate)
         self.embedding_dim = embedding_dim
 
         positional_encoding = np.zeros((max_len, embedding_dim))
@@ -53,7 +49,7 @@ class PositionalEncoding(tf.keras.layers.Layer):
         # the values of sin and cos change less with the difference in position.
         # This makes it easier to capture "global relationships".
         div_term = self._compute_div_term()
-        # radianradianradianradianradianradianradianradianradianradianradianradianradianradianradianradianradian
+        # The unit of angle is radian.
         positional_encoding[:, 0::2] = np.sin(position * div_term)
         positional_encoding[:, 1::2] = np.cos(position * div_term)
         # Expand dimensions to match the batch size.
@@ -83,27 +79,19 @@ class PositionalEncoding(tf.keras.layers.Layer):
         )
         return div_term
 
-    def call(self, x: tf.Tensor, training: Optional[bool] = None) -> tf.Tensor:
+    def call(self, x: tf.Tensor) -> tf.Tensor:
         """Compute the positional encoding operation for the input tensor.
 
-        This function adds the positional encoding to the input tensor and applies dropout.
-        Dropout is applied after the positional encoding to ensure that
-        the model learns robust representations of both the embeddings
-        and the positional information combined.
+        This function adds the positional encoding to the input tensor.
 
         Args:
             x (tf.Tensor):
                 Input tensor with shape (batch_size, seq_len, embedding_dim).
-            training (Optional[bool], optional):
-                True if the model is in training mode, False if in inference mode.
-                If `None`, the mode will be inferred from `self.training`.
-                Default is None.
 
         Returns:
             tf.Tensor:
                 The output tensor with shape (batch_size, seq_len, embedding_dim)
-                after adding positional encoding and applying dropout (if in training mode).
+                after adding positional encoding.
         """
         x = x + self.positional_encoding[:, : tf.shape(x)[1], :]
-        x = self.dropout(x, training=training)
         return x

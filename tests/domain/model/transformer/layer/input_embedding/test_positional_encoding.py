@@ -3,11 +3,11 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from generative_music.domain.model.transformer.layer.positional_encoding import \
+from generative_music.domain.model.transformer.layer.input_embedding.positional_encoding import \
     PositionalEncoding
 
 
-class TestPositionwiseFeedForward:
+class TestPositionalEncoding:
     """A test class for the Positional encoding .
 
     The class tests if the input tensor is correctly processed through the
@@ -25,11 +25,8 @@ class TestPositionwiseFeedForward:
         embedding_dim = 4
         max_seq_len = 10
         sample_seq_len = 5
-        self.dropout_rate = 0.5
 
-        self.positional_encoding_layer = PositionalEncoding(
-            embedding_dim, self.dropout_rate, max_seq_len
-        )
+        self.positional_encoding_layer = PositionalEncoding(embedding_dim, max_seq_len)
         self.input_tensor = tf.random.normal((1, sample_seq_len, embedding_dim))
 
     def test_positional_encoding_values(self):
@@ -72,33 +69,3 @@ class TestPositionwiseFeedForward:
         """
         output_tensor = self.positional_encoding_layer(self.input_tensor)
         assert self.input_tensor.shape == output_tensor.shape
-
-    def test_dropout(self):
-        """Check the dropout application in the output tensor.
-
-        Tests if the output tensor with dropout applied has
-        elements set to 0 where dropout is applied,
-        and elements equal to the corresponding elements in the output tensor
-        without dropout divided by (1 - dropout_rate) where dropout is not applied.
-        """
-        output_tensor_with_dropout = self.positional_encoding_layer(
-            self.input_tensor, training=True
-        )
-        output_tensor_without_dropout = self.positional_encoding_layer(
-            self.input_tensor, training=False
-        )
-
-        # Create a boolean mask for elements that are 0 in the output_tensor_with_dropout
-        zero_mask = tf.equal(output_tensor_with_dropout, 0)
-
-        scaled_elements = output_tensor_without_dropout / (1 - self.dropout_rate)
-        # If zero_mask is True, set the element to 0
-        # If zero_mask is False, set the element to the corresponding value in scaled_elements
-        modified_output_without_dropout = tf.where(
-            zero_mask, tf.zeros_like(output_tensor_without_dropout), scaled_elements
-        )
-        assert np.allclose(
-            modified_output_without_dropout.numpy(),
-            output_tensor_with_dropout.numpy(),
-            atol=1e-6,
-        )
