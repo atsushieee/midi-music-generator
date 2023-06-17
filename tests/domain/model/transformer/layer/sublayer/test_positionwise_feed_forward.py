@@ -2,7 +2,7 @@
 import pytest
 import tensorflow as tf
 
-from generative_music.domain.model.transformer.layer.positionwise_feed_forward import \
+from generative_music.domain.model.transformer.layer.sublayer.positionwise_feed_forward import \
     PositionwiseFeedForward
 
 

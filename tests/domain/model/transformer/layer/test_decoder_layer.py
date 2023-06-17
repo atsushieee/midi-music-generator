@@ -1,7 +1,7 @@
 """Tests for the DecoderLayer used in the Transformer model."""
 import tensorflow as tf
 
-from generative_music.domain.model.transformer.decoder_layer import \
+from generative_music.domain.model.transformer.layer.decoder_layer import \
     DecoderLayer
 
 

@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from generative_music.domain.model.transformer.layer.add_and_norm import \
+from generative_music.domain.model.transformer.layer.sublayer.add_and_norm import \
     AddAndNorm
 
 

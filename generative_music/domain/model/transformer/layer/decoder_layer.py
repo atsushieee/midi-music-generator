@@ -6,7 +6,7 @@ from typing import Optional
 
 import tensorflow as tf
 
-from generative_music.domain.model.transformer.layer import (
+from generative_music.domain.model.transformer.layer.sublayer import (
     AddAndNorm, MultiHeadAttention, PositionwiseFeedForward)
 
 

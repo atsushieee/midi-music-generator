@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from generative_music.domain.model.transformer.layer.multi_head_attention.multi_head_attention import \
+from generative_music.domain.model.transformer.layer.sublayer.multi_head_attention.multi_head_attention import \
     MultiHeadAttention
 
 
