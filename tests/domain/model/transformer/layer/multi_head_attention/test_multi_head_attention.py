@@ -5,10 +5,8 @@ import numpy as np
 import pytest
 import tensorflow as tf
 
-from generative_music.domain.model.transformer.layer.multi_head_attention.attention import \
-    Attention
 from generative_music.domain.model.transformer.layer.multi_head_attention.multi_head_attention import \
-    MultiHeadedAttention
+    MultiHeadAttention
 
 
 class TestMultiHeadAttention:
@@ -27,10 +25,7 @@ class TestMultiHeadAttention:
         """
         self.num_heads = 8
         self.dim_qkv = 512
-        attention = Attention()
-        self.multi_head_attention = MultiHeadedAttention(
-            self.num_heads, self.dim_qkv, attention
-        )
+        self.multi_head_attention = MultiHeadAttention(self.num_heads, self.dim_qkv)
         self.batch_size = 2
         self.seq_length = 8
 

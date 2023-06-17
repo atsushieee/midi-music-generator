@@ -53,7 +53,9 @@ class Attention(tf.keras.layers.Layer):
                 or (batch_size, num_heads, seq_len, dim_v / num_heads)
                 for Multi-head Attention.
             mask (tf.Tensor, optional):
-                Mask tensor with shape (batch_size, seq_len, seq_len).
+                Mask tensor with shape
+                (1, seq_len, seq_len) when not using multi-head attention
+                or (1, 1, seq_len, seq_len) when using multi-head attention.
                 If provided, the part of attention scores will be masked.
                 Defaults to None.
             training (bool, optional):

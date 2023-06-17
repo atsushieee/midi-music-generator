@@ -23,7 +23,7 @@ from generative_music.domain.model.transformer.layer.multi_head_attention.attent
     Attention
 
 
-class MultiHeadedAttention(tf.keras.layers.Layer):
+class MultiHeadAttention(tf.keras.layers.Layer):
     """This class is a custom Keras layer that implements the multi-headed attention.
 
     It splits the input query, key, and value into multiple heads,
@@ -42,8 +42,10 @@ class MultiHeadedAttention(tf.keras.layers.Layer):
     (referred to as d_model in the paper) is maintained throughout the model.
     """
 
-    def __init__(self, num_heads: int, d_model: int, attention: Attention):
-        """Initialize the MultiHeadedAttention class.
+    def __init__(
+        self, num_heads: int, d_model: int, dropout_rate: Optional[float] = 0.1
+    ):
+        """Initialize the MultiHeadAttention class.
 
         Args:
             num_heads (int): The number of attention heads.
@@ -55,14 +57,16 @@ class MultiHeadedAttention(tf.keras.layers.Layer):
                 but since the input of the first layer comes from
                 the output of the embedding layer
                 and may have different dimensions, it is set during instantiation.
-            attention (Attention): The attention mechanism to be used.
+            dropout_rate (float, optional):
+                The dropout rate to be applied to the attention weights.
+                Defaults to 0.1.
         """
-        super(MultiHeadedAttention, self).__init__()
+        super(MultiHeadAttention, self).__init__()
         assert d_model % num_heads == 0
         self.dim_per_head = d_model // num_heads
         self.num_heads = num_heads
         self.linears = [tf.keras.layers.Dense(d_model) for _ in range(4)]
-        self.attention = attention
+        self.attention = Attention(dropout_rate)
 
     def split_heads(self, x: tf.Tensor, batch_size: int) -> tf.Tensor:
         """Split the last dimension of the input tensor into (num_heads, dim_qkv).
@@ -108,7 +112,10 @@ class MultiHeadedAttention(tf.keras.layers.Layer):
                 However, due to the need for residual connections,
                 the dimensions are essentially the same for all layers.(d_model)
             mask (tf.Tensor, optional):
-                Mask tensor with shape (batch_size, seq_len, seq_len).
+                Mask tensor with shape (1, 1, seq_len, seq_len).
+                The first two dimensions (1, 1) are added to enable broadcasting
+                with the attention logits tensor,
+                where the first 1 is for batch_size and the second 1 is for num_heads.
                 If provided, the part of attention scores will be masked.
                 Defaults to None.
 
