@@ -80,12 +80,11 @@ class TestAttention:
             attention_weights_expected, dtype=tf.float32
         )
         expected_output_tensor = tf.constant(output_expected, dtype=tf.float32)
-        dropout_rate = None
-        attention_layer = Attention(dropout_rate=dropout_rate)
+        attention_layer = Attention()
         if mask is not None:
             mask = tf.constant(mask, dtype=tf.float32)
         output, attention_weights = attention_layer(
-            self.query, self.key, self.value, mask
+            self.query, self.key, self.value, mask, training=False
         )
         # Check if the output tensor and attention weights tensor
         # are equal to the expected tensors

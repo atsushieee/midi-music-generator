@@ -17,18 +17,17 @@ class Attention(tf.keras.layers.Layer):
     in the input sequences during the attention computation.
     """
 
-    def __init__(self, dropout_rate: Optional[float] = None):
+    def __init__(self, dropout_rate: Optional[float] = 0.1):
         """Initialize the Attention class.
 
         Args:
             dropout_rate (float, optional):
                 The dropout rate to be applied to the attention weights.
-                Defaults to None, meaning no dropout is applied.
+                Defaults to 0.1.
         """
         super(Attention, self).__init__()
         self.dropout_rate = dropout_rate
-        if self.dropout_rate is not None:
-            self.dropout = tf.keras.layers.Dropout(self.dropout_rate)
+        self.dropout = tf.keras.layers.Dropout(self.dropout_rate)
 
     def call(
         self,
@@ -77,8 +76,6 @@ class Attention(tf.keras.layers.Layer):
             scores -= 1e9 * mask
 
         attention_weights = tf.nn.softmax(scores, axis=-1)
-
-        if self.dropout_rate is not None:
-            attention_weights = self.dropout(attention_weights, training=training)
+        attention_weights = self.dropout(attention_weights, training=training)
 
         return tf.matmul(attention_weights, value), attention_weights

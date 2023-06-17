@@ -35,7 +35,7 @@ class PositionwiseFeedForward(tf.keras.layers.Layer):
                 The dimensionality of the intermediate layer in the feed-forward network.
                 This is the output dimension of the first linear layer (w_1)
                 and the input dimension of the second linear layer (w_2).
-            dropout_rate (float):
+            dropout_rate (float, optional):
                 The dropout rate to be applied between the first and second linear layers.
                 Defaults to 0.1.
         """
