@@ -2,7 +2,6 @@
 from unittest.mock import MagicMock
 
 import numpy as np
-import pytest
 import tensorflow as tf
 
 from generative_music.domain.model.transformer.layer.sublayer.multi_head_attention.multi_head_attention import \
@@ -16,8 +15,7 @@ class TestMultiHeadAttention:
     and the output is correctly concatenated.
     """
 
-    @pytest.fixture(autouse=True)
-    def setup_multi_head_attention(self):
+    def setup_method(self):
         """Initialize the multi-head attention layer tests.
 
         This fixture creates predefined number of heads and dimension of query, key and value.

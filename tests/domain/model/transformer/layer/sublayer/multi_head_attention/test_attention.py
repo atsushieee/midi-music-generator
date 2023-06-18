@@ -41,8 +41,7 @@ class TestAttention:
     are equal to the expected tensors, both with and without dropout applied.
     """
 
-    @pytest.fixture(autouse=True)
-    def setup_input_tensors(self):
+    def setup_method(self):
         """Initialize the input tensors for the attention layer tests.
 
         This fixture creates predefined query, key, and value tensors.

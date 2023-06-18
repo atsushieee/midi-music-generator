@@ -1,5 +1,4 @@
 """Tests for the Positionwise feed-forward layer used in the Transformer model."""
-import pytest
 import tensorflow as tf
 
 from generative_music.domain.model.transformer.layer.sublayer.positionwise_feed_forward import \
@@ -13,8 +12,7 @@ class TestPositionwiseFeedForward:
     position-wise feed-forward network and if dropout is applied correctly.
     """
 
-    @pytest.fixture(autouse=True)
-    def init_module(self):
+    def setup_method(self):
         """Initialize the Positionwise feed-forward network layer tests.
 
         This fixture creates predefined input tensor and other parameters.

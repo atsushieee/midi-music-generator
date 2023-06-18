@@ -1,6 +1,5 @@
 """Tests for the Positional encoding used in the Transformer model."""
 import numpy as np
-import pytest
 import tensorflow as tf
 
 from generative_music.domain.model.transformer.layer.input_embedding.positional_encoding import \
@@ -14,8 +13,7 @@ class TestPositionalEncoding:
     positional encoding and if dropout is applied correctly.
     """
 
-    @pytest.fixture(autouse=True)
-    def init_module(self):
+    def setup_method(self):
         """Initialize the Positional encoding tests.
 
         This fixture creates predefined embedding dimension, max sequence length,

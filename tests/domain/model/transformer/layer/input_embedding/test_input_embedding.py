@@ -1,6 +1,5 @@
 """Tests for the Input Embedding used in the Transformer model."""
 import numpy as np
-import pytest
 import tensorflow as tf
 
 from generative_music.domain.model.transformer.layer.input_embedding.input_embedding import \
@@ -14,8 +13,7 @@ class TestInputEmbedding:
     through the embedding layer and positional encoding.
     """
 
-    @pytest.fixture(autouse=True)
-    def init_module(self):
+    def setup_method(self):
         """Initialize the Input Embedding tests.
 
         This fixture creates predefined vocabulary size, embedding dimension,

@@ -1,5 +1,4 @@
 """Tests for the scaled embedding layer used in the Transformer model."""
-import pytest
 import tensorflow as tf
 
 from generative_music.domain.model.transformer.layer.input_embedding.embedding import \
@@ -13,8 +12,7 @@ class TestEmbedding:
     position-wise feed-forward network and if dropout is applied correctly.
     """
 
-    @pytest.fixture(autouse=True)
-    def init_module(self):
+    def setup_method(self):
         """Initialize the scaled embedding layer tests.
 
         This fixture creates predefined vocabulary size and embedding dimension.

@@ -1,5 +1,4 @@
 """Tests for the Generator layer used in the Transformer model."""
-import pytest
 import tensorflow as tf
 
 from generative_music.domain.model.transformer.layer.generator import Generator
@@ -12,8 +11,7 @@ class TestGenerator:
     if the softmax probabilities of the Generator's output sum to 1.
     """
 
-    @pytest.fixture(autouse=True)
-    def init_module(self):
+    def setup_method(self):
         """Initialize the Generator layer tests.
 
         This fixture creates a predefined input tensor and other parameters.

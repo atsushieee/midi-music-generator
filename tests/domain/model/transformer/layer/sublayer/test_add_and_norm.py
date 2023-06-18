@@ -1,6 +1,5 @@
 """Tests for the Add&Norm layer used in the Transformer model."""
 import numpy as np
-import pytest
 import tensorflow as tf
 
 from generative_music.domain.model.transformer.layer.sublayer.add_and_norm import \
@@ -14,8 +13,7 @@ class TestAddAndNorm:
     Add&Norm layer and if dropout is applied correctly.
     """
 
-    @pytest.fixture(autouse=True)
-    def init_module(self):
+    def setup_method(self):
         """Initialize the Add&Norm layer tests.
 
         This fixture creates predefined dropout rate.
