@@ -8,6 +8,7 @@ import tensorflow as tf
 
 from generative_music.domain.model.transformer.layer.sublayer import (
     AddAndNorm, MultiHeadAttention, PositionwiseFeedForward)
+from generative_music.domain.model.utils import ActivationFunctions
 
 
 class DecoderLayer(tf.keras.layers.Layer):
@@ -27,6 +28,7 @@ class DecoderLayer(tf.keras.layers.Layer):
         ff_dim: int,
         dropout_rate: float = 0.1,
         epsilon: float = 1e-6,
+        activation: ActivationFunctions = ActivationFunctions.GELU,
     ):
         """Initialize the DecoderLayer class.
 
@@ -41,12 +43,17 @@ class DecoderLayer(tf.keras.layers.Layer):
             epsilon (float, optional):
                 A small constant for numerical stability
                 of the LayerNormalization. Default is 1e-6.
+            activation (ActivationFunctions, optional):
+                The activation function to be used in the first linear layer (w_1).
+                Defaults to ActivationFunction.GELU, as it is adopted in GPT-2.
         """
         super(DecoderLayer, self).__init__()
         self.multi_head_attention_layer = MultiHeadAttention(
             num_heads, d_model, dropout_rate
         )
-        self.ff_network_layer = PositionwiseFeedForward(d_model, ff_dim, dropout_rate)
+        self.ff_network_layer = PositionwiseFeedForward(
+            d_model, ff_dim, dropout_rate, activation
+        )
 
         self.mha_add_and_norm_layer = AddAndNorm(epsilon, dropout_rate)
         self.ffn_add_and_norm_layer = AddAndNorm(epsilon, dropout_rate)

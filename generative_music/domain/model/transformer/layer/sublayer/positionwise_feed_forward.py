@@ -10,6 +10,8 @@ from typing import Optional
 
 import tensorflow as tf
 
+from generative_music.domain.model.utils import ActivationFunctions
+
 
 class PositionwiseFeedForward(tf.keras.layers.Layer):
     """This class is a custom Keras layer that implements position-wise feed-forward.
@@ -20,7 +22,13 @@ class PositionwiseFeedForward(tf.keras.layers.Layer):
     providing flexibility for custom models and adaptations.
     """
 
-    def __init__(self, output_dim: int, ff_dim: int, dropout_rate: float = 0.1):
+    def __init__(
+        self,
+        output_dim: int,
+        ff_dim: int,
+        dropout_rate: float = 0.1,
+        activation: ActivationFunctions = ActivationFunctions.GELU,
+    ):
         """Initialize the PositionwiseFeedForward class.
 
         Args:
@@ -38,9 +46,12 @@ class PositionwiseFeedForward(tf.keras.layers.Layer):
             dropout_rate (float, optional):
                 The dropout rate to be applied between the first and second linear layers.
                 Defaults to 0.1.
+            activation (ActivationFunctions, optional):
+                The activation function to be used in the first linear layer (w_1).
+                Defaults to ActivationFunction.GELU, as it is adopted in GPT-2.
         """
         super(PositionwiseFeedForward, self).__init__()
-        self.w_1 = tf.keras.layers.Dense(ff_dim, activation="relu")
+        self.w_1 = tf.keras.layers.Dense(ff_dim, activation=activation.value)
         self.w_2 = tf.keras.layers.Dense(output_dim)
         self.dropout = tf.keras.layers.Dropout(dropout_rate)
 
