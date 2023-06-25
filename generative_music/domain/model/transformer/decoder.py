@@ -11,12 +11,14 @@ from generative_music.domain.model.transformer.layer import (DecoderLayer,
                                                              InputEmbedding)
 
 
-class Decoder(tf.keras.layers.Layer):
-    """This class is a custom Keras layer that implements a decoder block in the Transformer.
+class Decoder(tf.keras.Model):
+    """This class is a custom Keras model that implements a decoder block in the Transformer.
 
     It processes the input tensor through an input embedding layer,
     multiple decoder layers and a generator layer.
-    This class is designed to be used as the main building block in the Transformer decoder.
+    This class is designed to be used as the main building block in the Transformer decoder
+    and inherits from tf.keras.Model to enable model management features
+    such as training, evaluation, prediction, and saving.
     """
 
     def __init__(
