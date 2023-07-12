@@ -10,6 +10,9 @@ packages = [{include = "generative_music"}]
 python = ">=3.9.0,<3.10.0"
 tensorflow = ">=2.8.0,<2.9.0"
 numpy = "1.23.5"
+miditoolkit = "^0.1.16"
+scipy = "^1.11.1"
+matplotlib = "^3.7.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.10.0"

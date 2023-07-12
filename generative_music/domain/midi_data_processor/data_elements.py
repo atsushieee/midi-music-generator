@@ -32,6 +32,7 @@ class Item:
         end: Optional[int] = None,
         velocity: Optional[int] = None,
         pitch: Optional[int] = None,
+        tempo: Optional[int] = None,
     ):
         """Initialize a MIDI event and its properties.
 
@@ -41,6 +42,7 @@ class Item:
             end (Optional[int]): The end time of the event, if applicable.
             velocity (Optional[int]): The velocity of the event, if applicable.
             pitch (Optional[int]): The pitch of the event, if applicable.
+            tempo (Optional[int]): The tempo of the event, if applicable.
 
         Raises:
             ValueError: If the provided name is not a valid ItemName Enum member.
@@ -54,3 +56,4 @@ class Item:
         self.end = end
         self.velocity = velocity
         self.pitch = pitch
+        self.tempo = tempo

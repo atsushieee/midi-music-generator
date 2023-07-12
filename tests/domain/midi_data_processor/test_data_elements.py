@@ -24,6 +24,7 @@ class TestItem:
         assert item.end is None
         assert item.velocity is None
         assert item.pitch is None
+        assert item.tempo is None
 
     def test_init_invalid_name(self):
         """Check if a ValueError is raised when creating an Item instance with an invalid name.
@@ -40,9 +41,12 @@ class TestItem:
         This test checks if the end, velocity, and pitch attributes are correctly
         assigned when the Item instance is created with optional arguments.
         """
-        item = Item(name=ItemName.NOTE, start=0, end=10, velocity=100, pitch=60)
+        item = Item(
+            name=ItemName.NOTE, start=0, end=10, velocity=100, pitch=60, tempo=100
+        )
         assert item.name == ItemName.NOTE
         assert item.start == 0
         assert item.end == 10
         assert item.velocity == 100
         assert item.pitch == 60
+        assert item.tempo == 100
