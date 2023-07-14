@@ -19,17 +19,17 @@ def create_test_midi():
         midi_parser.TempoChange(120, 0),
         midi_parser.TempoChange(100, 480),
         midi_parser.TempoChange(80, 720),
-        midi_parser.TempoChange(120, 840),
-        midi_parser.TempoChange(100, 1020),
-        midi_parser.TempoChange(60, 1080),
-        midi_parser.TempoChange(140, 1500),
+        midi_parser.TempoChange(120, 900),
+        midi_parser.TempoChange(100, 1320),
+        midi_parser.TempoChange(140, 1435),
     ]
     midi_obj.instruments.append(midi_parser.Instrument(0))
     midi_obj.instruments[0].notes = [
         midi_parser.Note(60, 62, 0, 480),
-        midi_parser.Note(64, 66, 480, 960),
+        midi_parser.Note(64, 66, 360, 960),
         midi_parser.Note(67, 69, 960, 1440),
-        midi_parser.Note(71, 73, 1320, 1920),
+        midi_parser.Note(71, 73, 1440, 1920),
+        midi_parser.Note(60, 61, 1675, 1915),
     ]
     # Create a temporary file
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mid")
@@ -55,7 +55,9 @@ class TestDataLoader:
         This method is called before each test function is executed.
         """
         self.test_midi_path = create_test_midi()
-        self.data_loader = DataLoader(self.test_midi_path, resolution=240)
+        self.data_loader = DataLoader(
+            self.test_midi_path, note_resolution=240, tempo_resolution=240
+        )
 
     def teardown_method(self):
         """Clean up the test environment by removing the test file.
@@ -73,13 +75,14 @@ class TestDataLoader:
         """
         # Read note items and check if they match the expected values
         note_items = self.data_loader.read_note_items()
-        assert len(note_items) == 4
+        assert len(note_items) == 5
 
         expected_note_items = [
             (0, 480, 60, 62),
-            (480, 960, 64, 66),
+            (240, 840, 64, 66),
             (960, 1440, 67, 69),
-            (1320, 1920, 71, 73),
+            (1440, 1920, 71, 73),
+            (1680, 1920, 60, 61),
         ]
 
         for item, (
@@ -103,17 +106,15 @@ class TestDataLoader:
         """
         # Read tempo items and check if they match the expected values
         tempo_items = self.data_loader.read_tempo_items()
-        assert len(tempo_items) == 8
+        assert len(tempo_items) == 6
 
         expected_tempo_items = [
             (0, 120),
-            (240, 120),
             (480, 100),
             (720, 80),
-            (960, 100),
-            (1200, 60),
+            (960, 120),
+            (1200, 100),
             (1440, 140),
-            (1680, 140),
         ]
 
         for item, (expected_start, expected_tempo) in zip(
