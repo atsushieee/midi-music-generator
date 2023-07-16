@@ -2,7 +2,7 @@
 import pytest
 
 from generative_music.domain.midi_data_processor.data_elements import (
-    Item, ItemName)
+    Event, EventName, Item, ItemName)
 
 
 class TestItem:
@@ -50,3 +50,31 @@ class TestItem:
         assert item.velocity == 100
         assert item.pitch == 60
         assert item.tempo == 100
+
+
+class TestEvent:
+    """A test class for the Event class.
+
+    The class tests if the Event instance is correctly created with valid and invalid names.
+    """
+
+    def test_init_valid_name(self):
+        """Check if the Event instance is correctly created with a valid name.
+
+        This test checks if the name, time, value and text attributes
+        are correctly assigned when the Event instance is created with a valid name.
+        """
+        event = Event(name=EventName.TEMPO_CLASS, time=1920, value="mid")
+        assert event.name == EventName.TEMPO_CLASS
+        assert event.time == 1920
+        assert event.value == "mid"
+        assert event.text is None
+
+    def test_init_invalid_name(self):
+        """Check if a ValueError is raised when creating an Event instance with an invalid name.
+
+        This test checks if a ValueError is raised when the Event instance is created
+        with an invalid name that is not a member of the EventName Enum.
+        """
+        with pytest.raises(ValueError):
+            Event(name="InvalidName", time=0, value=None, text=None)
