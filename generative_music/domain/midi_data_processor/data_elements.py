@@ -1,6 +1,6 @@
 """A module for representing MIDI events and their properties."""
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 
 
 class ItemName(Enum):
@@ -31,7 +31,7 @@ class Item:
         start: int,
         end: Optional[int] = None,
         velocity: Optional[int] = None,
-        pitch: Optional[int] = None,
+        pitch: Optional[Union[int, str]] = None,
         tempo: Optional[int] = None,
     ):
         """Initialize a MIDI event and its properties.
