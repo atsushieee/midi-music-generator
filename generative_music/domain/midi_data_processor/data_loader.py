@@ -86,13 +86,19 @@ class DataLoader:
         """Read and quantize tempo changes items from the MIDI file.
 
         This method reads tempo changes from the MIDI file
-        quantizes the tempo items to align them to the specified grid resolution.
-        The purpose of this method is to read and extract
+        and quantizes the tempo items to align them to the specified grid resolution.
+        The new tempo items will have values at each resolution step,
+        regardless of whether the tempo has changed or not. This is important
+        because it allows the model to learn that the tempo remains constant
+        in sections where it does not change.
+        The purpose of this method is to read, extract
         and preprocess tempo data from the MIDI file, which can be used
         for facilitating subsequent data processing and machine learning tasks.
 
         Returns:
-            List[Item]: A list of tempo items with the specified resolution.
+            List[Item]:
+                A list of items quantized to the specified grid resolution,
+                with tempo values at each resolution step.
         """
         tempo_changes = self.midi_obj.tempo_changes
         tempo_items = [
@@ -100,7 +106,8 @@ class DataLoader:
             for tempo in tempo_changes
         ]
         # Quantize note_items before returning
-        return self._quantize_items(tempo_items, self.tempo_resolution)
+        quantized_tempo = self._quantize_items(tempo_items, self.tempo_resolution)
+        return self._process_tempo_items(quantized_tempo)
 
     def _create_note_items(
         self, notes: List[miditoolkit.midi.containers.Note]
@@ -158,3 +165,42 @@ class DataLoader:
             if item.end is not None:
                 item.end += shift
         return items
+
+    def _process_tempo_items(self, tempo_items: List[Item]) -> List[Item]:
+        """Process tempo items to generate tempo items at a specific resolution.
+
+        This method takes a list of tempo items
+        and generates a new list of tempo items
+        at the specified resolution.
+        The new tempo items will have values at each resolution step,
+        regardless of whether the tempo has changed or not.
+        This is important because it allows the model to learn
+        that the tempo remains constant in sections where it does not change.
+
+        Args:
+            tempo_items (List[Item]):
+                A list of tempo items read from the MIDI file.
+
+        Returns:
+            List[Item]:
+                A list of items quantized to the specified grid resolution,
+                with tempo values at each resolution step.
+        """
+        max_tick = tempo_items[-1].start
+        wanted_ticks = np.arange(0, max_tick + 1, self.tempo_resolution)
+        output = []
+        current_tempo_item_index = 0
+        for tick in wanted_ticks:
+            while (current_tempo_item_index + 1) < len(
+                tempo_items
+            ) and tick >= tempo_items[current_tempo_item_index + 1].start:
+                current_tempo_item_index += 1
+
+            output.append(
+                Item(
+                    name=ItemName.TEMPO,
+                    start=tick,
+                    tempo=tempo_items[current_tempo_item_index].tempo,
+                )
+            )
+        return output

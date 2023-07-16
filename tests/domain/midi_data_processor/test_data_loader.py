@@ -19,9 +19,9 @@ def create_test_midi():
         midi_parser.TempoChange(120, 0),
         midi_parser.TempoChange(100, 480),
         midi_parser.TempoChange(80, 720),
-        midi_parser.TempoChange(120, 900),
-        midi_parser.TempoChange(100, 1320),
-        midi_parser.TempoChange(140, 1435),
+        midi_parser.TempoChange(100, 1020),
+        midi_parser.TempoChange(60, 1080),
+        midi_parser.TempoChange(140, 1860),
     ]
     midi_obj.instruments.append(midi_parser.Instrument(0))
     midi_obj.instruments[0].notes = [
@@ -106,15 +106,18 @@ class TestDataLoader:
         """
         # Read tempo items and check if they match the expected values
         tempo_items = self.data_loader.read_tempo_items()
-        assert len(tempo_items) == 6
+        assert len(tempo_items) == 9
 
         expected_tempo_items = [
             (0, 120),
+            (240, 120),
             (480, 100),
             (720, 80),
-            (960, 120),
-            (1200, 100),
-            (1440, 140),
+            (960, 60),
+            (1200, 60),
+            (1440, 60),
+            (1680, 60),
+            (1920, 140),
         ]
 
         for item, (expected_start, expected_tempo) in zip(
