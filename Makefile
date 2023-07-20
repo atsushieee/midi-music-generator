@@ -20,3 +20,7 @@ format:
 .PHONY: test
 test:
 	poetry run pytest -vs tests
+
+.PHONY: token-mapping
+token-mapping:
+	poetry run python generative_music/service/midi_mapping_service.py
