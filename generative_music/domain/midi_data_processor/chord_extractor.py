@@ -10,6 +10,7 @@ from typing import Dict, List, Tuple
 import miditoolkit
 import numpy as np
 
+from generative_music.domain.midi_data_processor.config import Config
 from generative_music.domain.midi_data_processor.data_elements import (
     Item, ItemName)
 
@@ -27,47 +28,7 @@ class ChordExtractor:
 
     def __init__(self):
         """Initialize the ChordExtractor for extracting chords from midi data."""
-        # define pitch classes
-        self.PITCH_CLASSES = [
-            "C",
-            "C#",
-            "D",
-            "D#",
-            "E",
-            "F",
-            "F#",
-            "G",
-            "G#",
-            "A",
-            "A#",
-            "B",
-        ]
-        # define chord maps (required)
-        self.CHORD_MAPS = {
-            "maj": [0, 4],
-            "min": [0, 3],
-            "dim": [0, 3, 6],
-            "aug": [0, 4, 8],
-            "dom": [0, 4, 7, 10],
-        }
-        # define chord insiders (+1)
-        self.CHORD_INSIDERS = {"maj": [7], "min": [7], "dim": [9], "aug": [], "dom": []}
-        # define chord outsiders (-1)
-        self.CHORD_OUTSIDERS_1 = {
-            "maj": [2, 5, 9],
-            "min": [2, 5, 8],
-            "dim": [2, 5, 10],
-            "aug": [2, 5, 9],
-            "dom": [2, 5, 9],
-        }
-        # define chord outsiders (-2)
-        self.CHORD_OUTSIDERS_2 = {
-            "maj": [1, 3, 6, 8, 10],
-            "min": [1, 4, 6, 9, 11],
-            "dim": [1, 4, 7, 8, 11],
-            "aug": [1, 3, 6, 7, 10],
-            "dom": [1, 3, 6, 8, 11],
-        }
+        self.midi_config = Config()
 
     def extract(self, notes: List[Item], resolution: int = 480) -> List[Item]:
         """Extract chords from a list of notes with a given resolution.
@@ -227,15 +188,15 @@ class ChordExtractor:
                         else:
                             quality = "maj"
                 # decide score
-                maps = self.CHORD_MAPS.get(quality)
+                maps = self.midi_config.CHORD_MAPS.get(quality)
                 _notes = [n for n in sequence if n not in maps]
                 score = 0
                 for n in _notes:
-                    if n in self.CHORD_OUTSIDERS_1.get(quality):
+                    if n in self.midi_config.CHORD_OUTSIDERS_1.get(quality):
                         score -= 1
-                    elif n in self.CHORD_OUTSIDERS_2.get(quality):
+                    elif n in self.midi_config.CHORD_OUTSIDERS_2.get(quality):
                         score -= 2
-                    elif n in self.CHORD_INSIDERS.get(quality):
+                    elif n in self.midi_config.CHORD_INSIDERS.get(quality):
                         score += 1
                 scores[root_note] = score
                 qualities[root_note] = quality
@@ -298,9 +259,9 @@ class ChordExtractor:
             # score
             score = scores.get(root_note, -100)
             return (
-                self.PITCH_CLASSES[root_note],
+                Config.PITCH_CLASSES[root_note],
                 quality,
-                self.PITCH_CLASSES[bass_note],
+                Config.PITCH_CLASSES[bass_note],
                 score,
             )
 

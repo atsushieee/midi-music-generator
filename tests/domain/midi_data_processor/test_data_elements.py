@@ -68,7 +68,6 @@ class TestEvent:
         assert event.name == EventName.TEMPO_CLASS
         assert event.time == 1920
         assert event.value == "mid"
-        assert event.text is None
 
     def test_init_invalid_name(self):
         """Check if a ValueError is raised when creating an Event instance with an invalid name.
@@ -77,4 +76,4 @@ class TestEvent:
         with an invalid name that is not a member of the EventName Enum.
         """
         with pytest.raises(ValueError):
-            Event(name="InvalidName", time=0, value=None, text=None)
+            Event(name="InvalidName", time=0, value=None)

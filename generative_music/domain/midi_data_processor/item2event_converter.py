@@ -9,6 +9,7 @@ from typing import List, Union
 
 import numpy as np
 
+from generative_music.domain.midi_data_processor.config import Config
 from generative_music.domain.midi_data_processor.data_elements import (
     Event, EventName, Item, ItemName)
 
@@ -45,12 +46,7 @@ class Item2EventConverter:
         self.items = items
         self.max_time = max_time
         self.ticks_per_bar = ticks_per_bar
-        self.DEFAULT_FRACTION = ticks_per_bar // min_resolution
-        # DEFAULT_VELOCITY_BINS = [0, 4, 8 , ・・・, 128]
-        self.DEFAULT_VELOCITY_BINS = np.linspace(0, 128, 32 + 1, dtype=int)
-        # DEFAULT_DURATION_BINS = [60, 120, ・・・. 3840]（1/32-2 bars duration）
-        self.DEFAULT_DURATION_BINS = np.arange(60, 3841, 60, dtype=int)
-        self.DEFAULT_TEMPO_INTERVALS = [range(30, 90), range(90, 150), range(150, 210)]
+        self.midi_config = Config(ticks_per_bar, min_resolution)
 
     def convert_items_to_events(self) -> List[Event]:
         """Convert a list of items into a list of events.
@@ -62,6 +58,7 @@ class Item2EventConverter:
         n_downbeat = 0
         groups = self._group_items()
         for i in range(len(groups)):
+            n_downbeat += 1
             if ItemName.NOTE not in [
                 item.name for item in groups[i][1:-1] if isinstance(item, Item)
             ]:
@@ -69,8 +66,9 @@ class Item2EventConverter:
 
             bar_st = groups[i][0]
             bar_et = groups[i][-1]
-            n_downbeat += 1
-            events.append(Event(name=EventName.BAR, text=f"{n_downbeat}"))
+            events.append(
+                Event(name=EventName.BAR, time=(n_downbeat - 1) * self.ticks_per_bar)
+            )
             for item in groups[i][1:-1]:
                 if not isinstance(item, Item):
                     continue
@@ -80,15 +78,14 @@ class Item2EventConverter:
                     continue
                 # position
                 flags = np.linspace(
-                    bar_st, bar_et, self.DEFAULT_FRACTION, endpoint=False
+                    bar_st, bar_et, self.midi_config.default_fraction, endpoint=False
                 )
                 index = np.argmin(abs(flags - item.start))
                 events.append(
                     Event(
                         name=EventName.POSITION,
                         time=item.start,
-                        value=f"{index + 1}/{self.DEFAULT_FRACTION}",
-                        text=str(item.start),
+                        value=f"{index + 1}/{self.midi_config.default_fraction}",
                     )
                 )
                 if item.name == ItemName.NOTE:
@@ -132,35 +129,23 @@ class Item2EventConverter:
         # velocity
         velocity = item.velocity if item.velocity is not None else 0
         velocity_index = int(
-            np.searchsorted(self.DEFAULT_VELOCITY_BINS, velocity, side="right") - 1
+            np.searchsorted(
+                self.midi_config.default_velocity_bins, velocity, side="right"
+            )
+            - 1
         )
         note_events.append(
-            Event(
-                name=EventName.NOTE_VELOCITY,
-                time=item.start,
-                value=velocity_index,
-                text=f"{item.velocity}/{self.DEFAULT_VELOCITY_BINS[velocity_index]}",
-            )
+            Event(name=EventName.NOTE_VELOCITY, time=item.start, value=velocity_index)
         )
         # pitch
         note_events.append(
-            Event(
-                name=EventName.NOTE_ON,
-                time=item.start,
-                value=item.pitch,
-                text=str(item.pitch),
-            )
+            Event(name=EventName.NOTE_ON, time=item.start, value=item.pitch)
         )
         # duration
         duration = 0 if item.end is None else item.end - item.start
-        index = np.argmin(abs(self.DEFAULT_DURATION_BINS - duration))
+        index = np.argmin(abs(self.midi_config.default_duration_bins - duration))
         note_events.append(
-            Event(
-                name=EventName.NOTE_DURATION,
-                time=item.start,
-                value=int(index),
-                text=f"{duration}/{self.DEFAULT_DURATION_BINS[index]}",
-            )
+            Event(name=EventName.NOTE_DURATION, time=item.start, value=int(index))
         )
         return note_events
 
@@ -175,12 +160,7 @@ class Item2EventConverter:
         """
         chord_events = []
         chord_events.append(
-            Event(
-                name=EventName.CHORD,
-                time=item.start,
-                value=item.pitch,
-                text=str(item.pitch),
-            )
+            Event(name=EventName.CHORD, time=item.start, value=item.pitch)
         )
         return chord_events
 
@@ -199,33 +179,59 @@ class Item2EventConverter:
         tempo = item.tempo
         # less DEFAULT_TEMPO_INTERVALS[0].start or more DEFAULT_TEMPO_INTERVALS[2].stop
         # is cut off
-        if tempo in self.DEFAULT_TEMPO_INTERVALS[0]:
-            tempo_style = Event(EventName.TEMPO_CLASS, item.start, "slow")
+        if tempo in self.midi_config.default_tempo_intervals[0]:
+            tempo_style = Event(
+                EventName.TEMPO_CLASS,
+                item.start,
+                self.midi_config.default_tempo_name[0],
+            )
             tempo_value = Event(
                 EventName.TEMPO_VALUE,
                 item.start,
-                tempo - self.DEFAULT_TEMPO_INTERVALS[0].start,
+                tempo - self.midi_config.default_tempo_intervals[0].start,
             )
-        elif tempo in self.DEFAULT_TEMPO_INTERVALS[1]:
-            tempo_style = Event(EventName.TEMPO_CLASS, item.start, "mid")
+        elif tempo in self.midi_config.default_tempo_intervals[1]:
+            tempo_style = Event(
+                EventName.TEMPO_CLASS,
+                item.start,
+                self.midi_config.default_tempo_name[1],
+            )
             tempo_value = Event(
                 EventName.TEMPO_VALUE,
                 item.start,
-                tempo - self.DEFAULT_TEMPO_INTERVALS[1].start,
+                tempo - self.midi_config.default_tempo_intervals[1].start,
             )
-        elif tempo in self.DEFAULT_TEMPO_INTERVALS[2]:
-            tempo_style = Event(EventName.TEMPO_CLASS, item.start, "fast")
+        elif tempo in self.midi_config.default_tempo_intervals[2]:
+            tempo_style = Event(
+                EventName.TEMPO_CLASS,
+                item.start,
+                self.midi_config.default_tempo_name[2],
+            )
             tempo_value = Event(
                 EventName.TEMPO_VALUE,
                 item.start,
-                tempo - self.DEFAULT_TEMPO_INTERVALS[2].start,
+                tempo - self.midi_config.default_tempo_intervals[2].start,
             )
-        elif tempo < self.DEFAULT_TEMPO_INTERVALS[0].start:
-            tempo_style = Event(EventName.TEMPO_CLASS, item.start, "slow")
+        elif tempo < self.midi_config.default_tempo_intervals[0].start:
+            tempo_style = Event(
+                EventName.TEMPO_CLASS,
+                item.start,
+                self.midi_config.default_tempo_name[0],
+            )
             tempo_value = Event(EventName.TEMPO_VALUE, item.start, 0)
-        elif tempo > self.DEFAULT_TEMPO_INTERVALS[2].stop:
-            tempo_style = Event(EventName.TEMPO_CLASS, item.start, "fast")
-            tempo_value = Event(EventName.TEMPO_VALUE, item.start, 59)
+        elif tempo > self.midi_config.default_tempo_intervals[2].stop:
+            tempo_style = Event(
+                EventName.TEMPO_CLASS,
+                item.start,
+                self.midi_config.default_tempo_name[2],
+            )
+            tempo_value = Event(
+                EventName.TEMPO_VALUE,
+                item.start,
+                self.midi_config.default_tempo_intervals[2].stop
+                - self.midi_config.default_tempo_intervals[2].start
+                - 1,
+            )
         tempo_events.append(tempo_style)
         tempo_events.append(tempo_value)
         return tempo_events

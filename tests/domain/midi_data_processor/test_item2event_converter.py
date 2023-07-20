@@ -53,7 +53,7 @@ class TestItem2EventConverter:
         events = self.item2event_converter.convert_items_to_events()
         assert len(events) == 50
         expected_events = [
-            (EventName.BAR, None, None),
+            (EventName.BAR, 0, None),
             (EventName.POSITION, 0, "1/16"),
             (EventName.TEMPO_CLASS, 0, "mid"),
             (EventName.TEMPO_VALUE, 0, 30),
@@ -71,7 +71,7 @@ class TestItem2EventConverter:
             (EventName.NOTE_VELOCITY, 0, 12),
             (EventName.NOTE_ON, 0, 67),
             (EventName.NOTE_DURATION, 0, 32),
-            (EventName.BAR, None, None),
+            (EventName.BAR, 1920, None),
             (EventName.POSITION, 1920, "1/16"),
             (EventName.TEMPO_CLASS, 1920, "fast"),
             (EventName.TEMPO_VALUE, 1920, 59),
@@ -89,7 +89,7 @@ class TestItem2EventConverter:
             (EventName.TEMPO_VALUE, 2880, 0),
             (EventName.POSITION, 2880, "9/16"),
             (EventName.CHORD, 2880, "G:dim"),
-            (EventName.BAR, None, None),
+            (EventName.BAR, 3840, None),
             (EventName.POSITION, 3840, "1/16"),
             (EventName.TEMPO_CLASS, 3840, "fast"),
             (EventName.TEMPO_VALUE, 3840, 0),

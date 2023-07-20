@@ -3,12 +3,16 @@ import json
 from pathlib import Path
 from typing import Dict
 
+from generative_music.domain.midi_data_processor.config import Config
+from generative_music.domain.midi_data_processor.data_elements import EventName
+
 
 class MappingGenerator:
     """A class that generates event2id and id2event mappings for MIDI data processing."""
 
     def __init__(self):
         """Initialize the MappingGenerator instance and create the data dictionary."""
+        self.midi_config = Config()
         self.data = self._create_data()
 
     def save_data(self, filename: Path):
@@ -40,33 +44,30 @@ class MappingGenerator:
         """
         keys = []
         # Bar values
-        keys.append("Bar_None")
+        keys.append(f"{EventName.BAR.value}_None")
         # Position values
-        for i in range(1, 17):
-            keys.append(f"Position_{i}/16")
+        for i in range(self.midi_config.default_fraction):
+            keys.append(f"{EventName.POSITION.value}_{i+1}/16")
         # Chord values
-        keys.append("Chord_N:N")
-        chords = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-        chord_types = ["maj", "min", "dom", "aug", "dim"]
-        for i, chord in enumerate(chords):
-            for j, chord_type in enumerate(chord_types):
-                keys.append(f"Chord_{chord}:{chord_type}")
+        keys.append(f"{EventName.CHORD.value}_N:N")
+        for i, chord in enumerate(self.midi_config.PITCH_CLASSES):
+            for j, chord_type in enumerate(self.midi_config.CHORD_TYPES):
+                keys.append(f"{EventName.CHORD.value}_{chord}:{chord_type}")
         # Tempo Class values
-        tempo_classes = ["fast", "mid", "slow"]
-        for i, tempo_class in enumerate(tempo_classes):
-            keys.append(f"Tempo Class_{tempo_class}")
+        for i, tempo_class in enumerate(self.midi_config.default_tempo_name):
+            keys.append(f"{EventName.TEMPO_CLASS.value}_{tempo_class}")
         # Tempo Value values
-        for i in range(60):
-            keys.append(f"Tempo Value_{i}")
+        for i in range(self.midi_config.num_tempo_interval):
+            keys.append(f"{EventName.TEMPO_VALUE.value}_{i}")
         # Note On values
-        for i in range(128):
-            keys.append(f"Note On_{i}")
+        for i in range(self.midi_config.num_note_pitches):
+            keys.append(f"{EventName.NOTE_ON.value}_{i}")
         # Note Velocity values
-        for i in range(33):
-            keys.append(f"Note Velocity_{i}")
+        for i in range(self.midi_config.num_note_velocities):
+            keys.append(f"{EventName.NOTE_VELOCITY.value}_{i}")
         # Note Duration values
-        for i in range(64):
-            keys.append(f"Note Duration_{i}")
+        for i in range(self.midi_config.num_note_durations):
+            keys.append(f"{EventName.NOTE_DURATION.value}_{i}")
 
         # Assign values to the keys in the dictionary
         data = {key: idx for idx, key in enumerate(keys)}

@@ -88,21 +88,17 @@ class Event:
     def __init__(
         self,
         name: EventName,
-        time: Optional[int] = None,
+        time: int,
         value: Optional[Union[int, str]] = None,
-        text: Optional[str] = None,
     ):
         """Initialize an Event instance with the given name, time, value and text.
 
         Args:
             name (EventName): The name of the event.
-            time (Optional[int]):
-                The time at which the event occurs. Defaults to None.
+            time (int): The time at which the event occurs. Defaults to None.
             value (Optional[Union[int, str]]):
                 A numeric or string value associated with the event.
                 Defaults to None.
-            text (Optional[str]):
-                A textual description of the event. Defaults to None.
 
         Raises:
             ValueError: If the provided name is not a valid EventName.
@@ -112,7 +108,6 @@ class Event:
         self.name = name
         self.time = time
         self.value = value
-        self.text = text
 
     def __repr__(self) -> str:
         """Return a string representation of the Event instance.
@@ -120,4 +115,4 @@ class Event:
         Returns:
             str: A string representation of the Event instance.
         """
-        return f"Event(name={self.name}, time={self.time}, value={self.value}, text={self.text})"
+        return f"Event(name={self.name}, time={self.time}, value={self.value})"
