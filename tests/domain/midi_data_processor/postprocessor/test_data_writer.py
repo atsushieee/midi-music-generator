@@ -4,9 +4,8 @@ from pathlib import Path
 import miditoolkit
 import pytest
 
-from generative_music.domain.midi_data_processor.config import Config
-from generative_music.domain.midi_data_processor.data_elements import (
-    Event, EventName)
+from generative_music.domain.midi_data_processor.midi_representation import (
+    Config, Event, EventName)
 from generative_music.domain.midi_data_processor.postprocessor.data_writer import \
     DataWriter
 

@@ -1,8 +1,8 @@
 """Tests for a class that extracts chord information from note data."""
-from generative_music.domain.midi_data_processor.chord_extractor import \
-    ChordExtractor
-from generative_music.domain.midi_data_processor.data_elements import (
+from generative_music.domain.midi_data_processor.midi_representation import (
     Item, ItemName)
+from generative_music.domain.midi_data_processor.preprocessor.chord_extractor import \
+    ChordExtractor
 
 
 class TestChordExtractor:

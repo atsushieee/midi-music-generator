@@ -1,7 +1,7 @@
 """Tests for representing MIDI events and their properties."""
 import pytest
 
-from generative_music.domain.midi_data_processor.data_elements import (
+from generative_music.domain.midi_data_processor.midi_representation.data_elements import (
     Event, EventName, Item, ItemName)
 
 

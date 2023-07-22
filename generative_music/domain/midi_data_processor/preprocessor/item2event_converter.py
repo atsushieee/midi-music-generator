@@ -9,9 +9,8 @@ from typing import List, Union
 
 import numpy as np
 
-from generative_music.domain.midi_data_processor.config import Config
-from generative_music.domain.midi_data_processor.data_elements import (
-    Event, EventName, Item, ItemName)
+from generative_music.domain.midi_data_processor.midi_representation import (
+    Config, Event, EventName, Item, ItemName)
 
 
 class Item2EventConverter:

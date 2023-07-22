@@ -10,9 +10,8 @@ from typing import Dict, List, Tuple
 import miditoolkit
 import numpy as np
 
-from generative_music.domain.midi_data_processor.config import Config
-from generative_music.domain.midi_data_processor.data_elements import (
-    Item, ItemName)
+from generative_music.domain.midi_data_processor.midi_representation import (
+    Config, Item, ItemName)
 
 
 # [TODO] Implement a new logic for the ChordExtractor class

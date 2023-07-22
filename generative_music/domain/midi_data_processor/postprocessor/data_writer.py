@@ -10,9 +10,8 @@ from typing import List, Tuple
 
 import miditoolkit
 
-from generative_music.domain.midi_data_processor.config import Config
-from generative_music.domain.midi_data_processor.data_elements import (
-    Event, EventName)
+from generative_music.domain.midi_data_processor.midi_representation import (
+    Config, Event, EventName)
 
 
 class DataWriter:

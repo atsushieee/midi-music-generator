@@ -1,7 +1,7 @@
 """Tests for a class that converts item to event data."""
-from generative_music.domain.midi_data_processor.data_elements import (
+from generative_music.domain.midi_data_processor.midi_representation import (
     EventName, Item, ItemName)
-from generative_music.domain.midi_data_processor.item2event_converter import \
+from generative_music.domain.midi_data_processor.preprocessor.item2event_converter import \
     Item2EventConverter
 
 

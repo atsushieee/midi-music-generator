@@ -11,7 +11,7 @@ from typing import List, Optional
 import miditoolkit
 import numpy as np
 
-from generative_music.domain.midi_data_processor.data_elements import (
+from generative_music.domain.midi_data_processor.midi_representation import (
     Item, ItemName)
 
 

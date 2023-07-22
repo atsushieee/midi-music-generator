@@ -3,8 +3,8 @@ import json
 from pathlib import Path
 from typing import Dict
 
-from generative_music.domain.midi_data_processor.config import Config
-from generative_music.domain.midi_data_processor.data_elements import EventName
+from generative_music.domain.midi_data_processor.midi_representation import (
+    Config, EventName)
 
 
 class MappingGenerator:

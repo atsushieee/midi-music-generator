@@ -4,8 +4,10 @@ import tempfile
 
 from miditoolkit.midi import parser as midi_parser
 
-from generative_music.domain.midi_data_processor.data_elements import ItemName
-from generative_music.domain.midi_data_processor.data_loader import DataLoader
+from generative_music.domain.midi_data_processor.midi_representation import \
+    ItemName
+from generative_music.domain.midi_data_processor.preprocessor.data_loader import \
+    DataLoader
 
 
 def create_test_midi():
