@@ -6,6 +6,7 @@ Author: Yu-Siang (Remy) Huang
 License: https://github.com/YatingMusic/remi/blob/master/LICENSE
 """
 
+from pathlib import Path
 from typing import List, Optional
 
 import miditoolkit
@@ -25,11 +26,11 @@ class DataLoader:
     into an appropriate format for easier handling and analysis.
     """
 
-    def __init__(self, file_path, note_resolution=120, tempo_resolution=480):
+    def __init__(self, file_path: Path, note_resolution=120, tempo_resolution=480):
         """Initialize the DataLoader with the given file path and resolution.
 
         Args:
-            file_path (str): The path to the MIDI file to be loaded.
+            file_path (Path): The path to the MIDI file to be loaded.
             note_resolution (int):
                 The resolution (ticks per beat) of the note of MIDI file.
                 Default is 120.
@@ -38,7 +39,7 @@ class DataLoader:
                 Default is 480.
         """
         self.file_path = file_path
-        self.midi_obj = miditoolkit.midi.parser.MidiFile(self.file_path)
+        self.midi_obj = miditoolkit.midi.parser.MidiFile(str(self.file_path))
         self.note_resolution = note_resolution
         self.tempo_resolution = tempo_resolution
 

@@ -5,7 +5,7 @@ import tempfile
 from collections import defaultdict
 from pathlib import Path
 
-from generative_music.domain.midi_data_processor.preprocessor.dataset_splitter import \
+from generative_music.domain.dataset_preparation.dataset_splitter import \
     DatasetSplitter
 
 

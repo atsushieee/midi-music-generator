@@ -1,6 +1,7 @@
 """Tests for a class that loads MIDI tempo and note event data."""
 import os
 import tempfile
+from pathlib import Path
 
 from miditoolkit.midi import parser as midi_parser
 
@@ -10,11 +11,11 @@ from generative_music.domain.midi_data_processor.preprocessor.data_loader import
     DataLoader
 
 
-def create_test_midi():
+def create_test_midi() -> Path:
     """Create a test MIDI file with specified tempo changes and notes.
 
     Returns:
-        str: The path of the temporary MIDI file created.
+        Path: The path of the temporary MIDI file created.
     """
     midi_obj = midi_parser.MidiFile()
     midi_obj.tempo_changes = [
@@ -39,7 +40,7 @@ def create_test_midi():
     # Dump MIDI data to the temporary file
     midi_obj.dump(temp_file.name)
 
-    return temp_file.name
+    return Path(temp_file.name)
 
 
 class TestDataLoader:
