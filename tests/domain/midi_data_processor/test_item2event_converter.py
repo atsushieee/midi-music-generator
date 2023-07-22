@@ -35,7 +35,7 @@ class TestItem2EventConverter:
             # Notes
             Item(name=ItemName.NOTE, start=0, end=1920, velocity=43, pitch=60),  # C
             Item(name=ItemName.NOTE, start=0, end=1910, velocity=40, pitch=64),  # E
-            Item(name=ItemName.NOTE, start=0, end=1960, velocity=48, pitch=67),  # G
+            Item(name=ItemName.NOTE, start=0, end=2000, velocity=48, pitch=67),  # G
             Item(name=ItemName.NOTE, start=1920, end=2880, velocity=65, pitch=62),  # D
             Item(name=ItemName.NOTE, start=3840, end=5760, velocity=48, pitch=64),  # E
             Item(name=ItemName.NOTE, start=3840, end=5790, velocity=48, pitch=68),  # G#
@@ -62,15 +62,15 @@ class TestItem2EventConverter:
             (EventName.POSITION, 0, "1/16"),
             (EventName.NOTE_VELOCITY, 0, 10),
             (EventName.NOTE_ON, 0, 60),
-            (EventName.NOTE_DURATION, 0, 31),
+            (EventName.NOTE_DURATION, 0, 15),
             (EventName.POSITION, 0, "1/16"),
             (EventName.NOTE_VELOCITY, 0, 10),
             (EventName.NOTE_ON, 0, 64),
-            (EventName.NOTE_DURATION, 0, 31),
+            (EventName.NOTE_DURATION, 0, 15),
             (EventName.POSITION, 0, "1/16"),
             (EventName.NOTE_VELOCITY, 0, 12),
             (EventName.NOTE_ON, 0, 67),
-            (EventName.NOTE_DURATION, 0, 32),
+            (EventName.NOTE_DURATION, 0, 16),
             (EventName.BAR, 1920, None),
             (EventName.POSITION, 1920, "1/16"),
             (EventName.TEMPO_CLASS, 1920, "fast"),
@@ -80,7 +80,7 @@ class TestItem2EventConverter:
             (EventName.POSITION, 1920, "1/16"),
             (EventName.NOTE_VELOCITY, 1920, 16),
             (EventName.NOTE_ON, 1920, 62),
-            (EventName.NOTE_DURATION, 1920, 15),
+            (EventName.NOTE_DURATION, 1920, 7),
             (EventName.POSITION, 2400, "5/16"),
             (EventName.TEMPO_CLASS, 2400, "slow"),
             (EventName.TEMPO_VALUE, 2400, 0),
@@ -98,11 +98,11 @@ class TestItem2EventConverter:
             (EventName.POSITION, 3840, "1/16"),
             (EventName.NOTE_VELOCITY, 3840, 12),
             (EventName.NOTE_ON, 3840, 64),
-            (EventName.NOTE_DURATION, 3840, 31),
+            (EventName.NOTE_DURATION, 3840, 15),
             (EventName.POSITION, 3840, "1/16"),
             (EventName.NOTE_VELOCITY, 3840, 12),
             (EventName.NOTE_ON, 3840, 68),
-            (EventName.NOTE_DURATION, 3840, 31),
+            (EventName.NOTE_DURATION, 3840, 15),
         ]
         for event, (expected_name, expected_time, expected_value) in zip(
             events, expected_events

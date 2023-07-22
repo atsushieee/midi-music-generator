@@ -1,4 +1,4 @@
-"""Midi data tokenization (event2id and id2evenr) package.
+"""Midi data tokenization (event2id and id2event) package.
 
 This package contains various tokenization modules and classes for MIDI data,
 including the creation of token mappings, tokenization and detokenization processes.

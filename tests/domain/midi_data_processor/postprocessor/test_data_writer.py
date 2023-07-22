@@ -29,7 +29,7 @@ class TestDataWriter:
         """
         self.midi_config = Config()
         self.first_note_velocity_id = 10
-        self.first_note_duration_id = 31
+        self.first_note_duration_id = 15
         self.test_events = [
             Event(EventName.BAR, 0, None),
             Event(EventName.POSITION, 0, "1/16"),
@@ -44,7 +44,7 @@ class TestDataWriter:
             Event(EventName.POSITION, 480, "5/16"),
             Event(EventName.NOTE_VELOCITY, 480, 11),
             Event(EventName.NOTE_ON, 480, 64),
-            Event(EventName.NOTE_DURATION, 480, 23),
+            Event(EventName.NOTE_DURATION, 480, 11),
             Event(EventName.BAR, 1920, None),
             Event(EventName.POSITION, 1920, "1/16"),
             Event(EventName.TEMPO_CLASS, 1920, self.midi_config.default_tempo_name[2]),
@@ -54,11 +54,11 @@ class TestDataWriter:
             Event(EventName.POSITION, 1920, "1/16"),
             Event(EventName.NOTE_VELOCITY, 1920, 8),
             Event(EventName.NOTE_ON, 1920, 62),
-            Event(EventName.NOTE_DURATION, 1920, 31),
+            Event(EventName.NOTE_DURATION, 1920, 15),
             Event(EventName.POSITION, 2880, "9/16"),
             Event(EventName.NOTE_VELOCITY, 2880, 9),
             Event(EventName.NOTE_ON, 2880, 65),
-            Event(EventName.NOTE_DURATION, 2880, 15),
+            Event(EventName.NOTE_DURATION, 2880, 7),
         ]
         self.data_writer = DataWriter(self.midi_config)
 
@@ -102,8 +102,10 @@ class TestDataWriter:
             midi.instruments[0].notes[0].end
             == self.midi_config.default_duration_bins[self.first_note_duration_id]
         )
+        print(self.midi_config.default_duration_bins[self.first_note_duration_id])
         assert midi.instruments[0].notes[0].pitch == 60
         assert (
             midi.instruments[0].notes[0].velocity
             == self.midi_config.default_velocity_bins[self.first_note_velocity_id]
         )
+        print(self.midi_config.default_velocity_bins[self.first_note_velocity_id])

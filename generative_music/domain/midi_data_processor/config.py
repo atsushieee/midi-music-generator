@@ -60,7 +60,12 @@ class Config:
         self.num_note_pitches = 128
         self.default_velocity_bins = np.linspace(0, 128, 32 + 1, dtype=int)
         self.num_note_velocities = len(self.default_velocity_bins)
-        self.default_duration_bins = np.arange(60, 3841, 60, dtype=int)
+        # The max duration is the length of 2 bars,
+        # and default_duration_bins are generated within the range of min_resolution
+        # to the tick count of 2 bars.
+        self.default_duration_bins = np.arange(
+            min_resolution, ticks_per_bar * 2 + 1, min_resolution, dtype=int
+        )
         self.num_note_durations = len(self.default_duration_bins)
 
     def _validate_tempo_data(self):
