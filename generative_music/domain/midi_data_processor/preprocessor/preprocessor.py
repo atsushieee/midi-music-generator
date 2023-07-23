@@ -2,8 +2,8 @@
 from pathlib import Path
 from typing import List
 
-from generative_music.domain.midi_data_processor.midi_representation import \
-    Event
+from generative_music.domain.midi_data_processor.midi_representation import (
+    Config, Event)
 from generative_music.domain.midi_data_processor.preprocessor.chord_extractor import \
     ChordExtractor
 from generative_music.domain.midi_data_processor.preprocessor.data_loader import \
@@ -22,19 +22,15 @@ class Preprocessor:
     for easier handling and analysis.
     """
 
-    def __init__(self, midi_file_path: Path, note_resolution=120, tempo_resolution=480):
+    def __init__(self, midi_file_path: Path, midi_config: Config):
         """Initialize the Preprocessor instance with the given MIDI file.
 
         Args:
             midi_file_path (Path): The path to the MIDI file to be processed.
-            note_resolution (int, optional):
-                The resolution for note events. Defaults to 120.
-            tempo_resolution (int, optional):
-                The resolution for tempo events. Defaults to 480.
+            midi_config (Config): The Configuration for MIDI representation.
         """
         self.midi_file_path = midi_file_path
-        self.note_resolution = note_resolution
-        self.tempo_resolution = tempo_resolution
+        self.midi_config = midi_config
 
     def process(self) -> List[Event]:
         """Process the MIDI file and generate a list of events.
@@ -47,17 +43,15 @@ class Preprocessor:
             List[Event]: A list of events generated from the MIDI file.
         """
         # Initialize DataLoader, ChordExtractor, and Item2EventConverter
-        data_loader = DataLoader(
-            self.midi_file_path, self.note_resolution, self.tempo_resolution
-        )
-        chord_extractor = ChordExtractor()
+        data_loader = DataLoader(self.midi_file_path, self.midi_config)
+        chord_extractor = ChordExtractor(self.midi_config)
 
         # Read and process notes and tempo items
         note_items = data_loader.read_note_items()
         tempo_items = data_loader.read_tempo_items()
 
         # Extract chords from note items
-        chord_items = chord_extractor.extract(note_items, self.tempo_resolution)
+        chord_items = chord_extractor.extract(note_items)
 
         # Combine note, chord, and tempo items
         combined_items = tempo_items + chord_items + note_items
@@ -66,7 +60,9 @@ class Preprocessor:
         max_time = max(
             item.end if item.end is not None else item.start for item in note_items
         )
-        item2event_converter = Item2EventConverter(combined_items, max_time)
+        item2event_converter = Item2EventConverter(
+            combined_items, max_time, self.midi_config
+        )
 
         # Convert combined items to events
         events = item2event_converter.convert_items_to_events()

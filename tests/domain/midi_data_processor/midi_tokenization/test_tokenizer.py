@@ -20,12 +20,12 @@ class TestTokenizer:
         and initializing the Config instance.
         This method is called before each test function is executed.
         """
-        config = Config()
-        self.tokenizer = Tokenizer(config)
+        self.midi_config = Config()
+        self.tokenizer = Tokenizer(self.midi_config)
 
     def test_tokenize(self):
         """Test if the tokenization correctly converts an Event instance to an integer."""
-        event = Event(EventName.POSITION, 0, "1/16")
+        event = Event(EventName.POSITION, 0, f"1/{self.midi_config.DEFAULT_FRACTION}")
         event_id = self.tokenizer.tokenize(event)
         assert isinstance(event_id, int)
 
@@ -39,7 +39,11 @@ class TestTokenizer:
 
     def test_tokenize_detokenize_consistency(self):
         """Test if the tokenization and detokenization are consistent."""
-        event = Event(EventName.POSITION, 1920, "1/16")
+        event = Event(
+            EventName.POSITION,
+            self.midi_config.TICKS_PER_BAR,
+            f"1/{self.midi_config.DEFAULT_FRACTION}",
+        )
         event_id = self.tokenizer.tokenize(event)
         detokenized_event = self.tokenizer.detokenize(event_id, event.time)
         assert event.name == detokenized_event.name

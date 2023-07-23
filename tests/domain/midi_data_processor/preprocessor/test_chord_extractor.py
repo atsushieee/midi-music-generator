@@ -1,6 +1,6 @@
 """Tests for a class that extracts chord information from note data."""
 from generative_music.domain.midi_data_processor.midi_representation import (
-    Item, ItemName)
+    Config, Item, ItemName)
 from generative_music.domain.midi_data_processor.preprocessor.chord_extractor import \
     ChordExtractor
 
@@ -44,7 +44,7 @@ class TestChordExtractor:
             Item(name=ItemName.NOTE, start=3840, end=5760, velocity=48, pitch=74),  # D
             Item(name=ItemName.NOTE, start=3840, end=5760, velocity=48, pitch=78),  # F#
         ]
-        self.chord_extractor = ChordExtractor()
+        self.chord_extractor = ChordExtractor(Config())
 
     def test_extract_chords(self):
         """Test if the chord items are correctly extracted and match the expected values.
@@ -53,7 +53,7 @@ class TestChordExtractor:
         and the consistency between the expected chord items (start, end, pitch)
         and the actual chord items.
         """
-        chord_items = self.chord_extractor.extract(self.test_note_items, 480)
+        chord_items = self.chord_extractor.extract(self.test_note_items)
         assert len(chord_items) == 4
 
         expected_chord_items = [

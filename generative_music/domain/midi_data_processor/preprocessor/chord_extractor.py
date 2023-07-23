@@ -25,11 +25,15 @@ class ChordExtractor:
     for easier understanding and further analysis.
     """
 
-    def __init__(self):
-        """Initialize the ChordExtractor for extracting chords from midi data."""
-        self.midi_config = Config()
+    def __init__(self, midi_config: Config):
+        """Initialize the ChordExtractor for extracting chords from midi data.
 
-    def extract(self, notes: List[Item], resolution: int = 480) -> List[Item]:
+        Args:
+            midi_config (Config): The Configuration for MIDI representation.
+        """
+        self.midi_config = midi_config
+
+    def extract(self, notes: List[Item]) -> List[Item]:
         """Extract chords from a list of notes with a given resolution.
 
         This method reads the notes, converts them to a pianoroll representation
@@ -39,8 +43,6 @@ class ChordExtractor:
 
         Args:
             notes (List[Item]): A list of note items to extract chords from.
-            resolution (int, optional):
-                The resolution of the pianoroll, in ticks per beat. Defaults to 480.
 
         Returns:
             List[Item]: A list of chord items extracted from the input notes.
@@ -48,16 +50,20 @@ class ChordExtractor:
         # read
         max_tick = max([0 if n.end is None else n.end for n in notes])
         pianoroll = self._note2pianoroll(
-            notes=notes, max_tick=max_tick, ticks_per_beat=resolution
+            notes=notes,
+            max_tick=max_tick,
+            ticks_per_beat=self.midi_config.CHORD_RESOLUTION,
         )
         # get lots of candidates
         candidates: Dict[int, Dict[int, Tuple[str, str, str, int]]] = {}
         # the shortest: 2 beat, longest: 4 beat
         # Explore chord possibilities w ith 4 (1 bar) or 2 (1/2 bar) window widths
         for interval in [4, 2]:
-            for start_tick in range(0, max_tick, resolution):
+            for start_tick in range(0, max_tick, self.midi_config.CHORD_RESOLUTION):
                 # set target pianoroll
-                end_tick = int(resolution * interval + start_tick)
+                end_tick = int(
+                    self.midi_config.CHORD_RESOLUTION * interval + start_tick
+                )
                 if end_tick > max_tick:
                     end_tick = max_tick
                 _pianoroll = pianoroll[start_tick:end_tick, :]
@@ -188,14 +194,20 @@ class ChordExtractor:
                             quality = "maj"
                 # decide score
                 maps = self.midi_config.CHORD_MAPS.get(quality)
+                if maps is None:
+                    continue
                 _notes = [n for n in sequence if n not in maps]
                 score = 0
                 for n in _notes:
-                    if n in self.midi_config.CHORD_OUTSIDERS_1.get(quality):
+                    outsiders_1 = self.midi_config.CHORD_OUTSIDERS_1.get(quality, [])
+                    outsiders_2 = self.midi_config.CHORD_OUTSIDERS_2.get(quality, [])
+                    insiders = self.midi_config.CHORD_INSIDERS.get(quality, [])
+
+                    if n in outsiders_1:
                         score -= 1
-                    elif n in self.midi_config.CHORD_OUTSIDERS_2.get(quality):
+                    elif n in outsiders_2:
                         score -= 2
-                    elif n in self.midi_config.CHORD_INSIDERS.get(quality):
+                    elif n in insiders:
                         score += 1
                 scores[root_note] = score
                 qualities[root_note] = quality
@@ -258,9 +270,9 @@ class ChordExtractor:
             # score
             score = scores.get(root_note, -100)
             return (
-                Config.PITCH_CLASSES[root_note],
+                self.midi_config.PITCH_CLASSES[root_note],
                 quality,
-                Config.PITCH_CLASSES[bass_note],
+                self.midi_config.PITCH_CLASSES[bass_note],
                 score,
             )
 

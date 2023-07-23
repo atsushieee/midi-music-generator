@@ -27,25 +27,17 @@ class Item2EventConverter:
     allowing for more effective learning and pattern recognition in subsequent tasks.
     """
 
-    def __init__(
-        self,
-        items: List[Item],
-        max_time: int,
-        ticks_per_bar: int = 1920,
-        min_resolution: int = 120,
-    ):
+    def __init__(self, items: List[Item], max_time: int, midi_config: Config):
         """Initialize the Item2EventConverter to convert item to event data.
 
         Args:
             items (List[Item]): A list of Item objects to be converted.
             max_time (int): The maximum time.
-            ticks_per_bar (int, optional): The number of ticks per bar. Default is 1920.
-            min_resolution (int, optional): The minimum resolution. Default is 120.
+            midi_config (Config): The Configuration for MIDI representation.
         """
         self.items = items
         self.max_time = max_time
-        self.ticks_per_bar = ticks_per_bar
-        self.midi_config = Config(ticks_per_bar, min_resolution)
+        self.midi_config = midi_config
 
     def convert_items_to_events(self) -> List[Event]:
         """Convert a list of items into a list of events.
@@ -66,7 +58,10 @@ class Item2EventConverter:
             bar_st = groups[i][0]
             bar_et = groups[i][-1]
             events.append(
-                Event(name=EventName.BAR, time=(n_downbeat - 1) * self.ticks_per_bar)
+                Event(
+                    name=EventName.BAR,
+                    time=(n_downbeat - 1) * self.midi_config.TICKS_PER_BAR,
+                )
             )
             for item in groups[i][1:-1]:
                 if not isinstance(item, Item):
@@ -77,14 +72,14 @@ class Item2EventConverter:
                     continue
                 # position
                 flags = np.linspace(
-                    bar_st, bar_et, self.midi_config.default_fraction, endpoint=False
+                    bar_st, bar_et, self.midi_config.DEFAULT_FRACTION, endpoint=False
                 )
                 index = np.argmin(abs(flags - item.start))
                 events.append(
                     Event(
                         name=EventName.POSITION,
                         time=item.start,
-                        value=f"{index + 1}/{self.midi_config.default_fraction}",
+                        value=f"{index + 1}/{self.midi_config.DEFAULT_FRACTION}",
                     )
                 )
                 if item.name == ItemName.NOTE:
@@ -104,7 +99,11 @@ class Item2EventConverter:
                 A list of lists, where each inner list contains items within a downbeat.
         """
         self.items.sort(key=lambda x: x.start)
-        downbeats = np.arange(0, self.max_time + self.ticks_per_bar, self.ticks_per_bar)
+        downbeats = np.arange(
+            0,
+            self.max_time + self.midi_config.TICKS_PER_BAR,
+            self.midi_config.TICKS_PER_BAR,
+        )
         groups = []
         for db1, db2 in zip(downbeats[:-1], downbeats[1:]):
             insiders = []
@@ -129,7 +128,7 @@ class Item2EventConverter:
         velocity = item.velocity if item.velocity is not None else 0
         velocity_index = int(
             np.searchsorted(
-                self.midi_config.default_velocity_bins, velocity, side="right"
+                self.midi_config.DEFAULT_VELOCITY_BINS, velocity, side="right"
             )
             - 1
         )
@@ -142,7 +141,7 @@ class Item2EventConverter:
         )
         # duration
         duration = 0 if item.end is None else item.end - item.start
-        index = np.argmin(abs(self.midi_config.default_duration_bins - duration))
+        index = np.argmin(abs(self.midi_config.DEFAULT_DURATION_BINS - duration))
         note_events.append(
             Event(name=EventName.NOTE_DURATION, time=item.start, value=int(index))
         )
@@ -178,57 +177,57 @@ class Item2EventConverter:
         tempo = item.tempo
         # less DEFAULT_TEMPO_INTERVALS[0].start or more DEFAULT_TEMPO_INTERVALS[2].stop
         # is cut off
-        if tempo in self.midi_config.default_tempo_intervals[0]:
+        if tempo in self.midi_config.DEFAULT_TEMPO_INTERVALS[0]:
             tempo_style = Event(
                 EventName.TEMPO_CLASS,
                 item.start,
-                self.midi_config.default_tempo_name[0],
+                self.midi_config.DEFAULT_TEMPO_NAMES[0],
             )
             tempo_value = Event(
                 EventName.TEMPO_VALUE,
                 item.start,
-                tempo - self.midi_config.default_tempo_intervals[0].start,
+                tempo - self.midi_config.DEFAULT_TEMPO_INTERVALS[0].start,
             )
-        elif tempo in self.midi_config.default_tempo_intervals[1]:
+        elif tempo in self.midi_config.DEFAULT_TEMPO_INTERVALS[1]:
             tempo_style = Event(
                 EventName.TEMPO_CLASS,
                 item.start,
-                self.midi_config.default_tempo_name[1],
+                self.midi_config.DEFAULT_TEMPO_NAMES[1],
             )
             tempo_value = Event(
                 EventName.TEMPO_VALUE,
                 item.start,
-                tempo - self.midi_config.default_tempo_intervals[1].start,
+                tempo - self.midi_config.DEFAULT_TEMPO_INTERVALS[1].start,
             )
-        elif tempo in self.midi_config.default_tempo_intervals[2]:
+        elif tempo in self.midi_config.DEFAULT_TEMPO_INTERVALS[2]:
             tempo_style = Event(
                 EventName.TEMPO_CLASS,
                 item.start,
-                self.midi_config.default_tempo_name[2],
+                self.midi_config.DEFAULT_TEMPO_NAMES[2],
             )
             tempo_value = Event(
                 EventName.TEMPO_VALUE,
                 item.start,
-                tempo - self.midi_config.default_tempo_intervals[2].start,
+                tempo - self.midi_config.DEFAULT_TEMPO_INTERVALS[2].start,
             )
-        elif tempo < self.midi_config.default_tempo_intervals[0].start:
+        elif tempo < self.midi_config.DEFAULT_TEMPO_INTERVALS[0].start:
             tempo_style = Event(
                 EventName.TEMPO_CLASS,
                 item.start,
-                self.midi_config.default_tempo_name[0],
+                self.midi_config.DEFAULT_TEMPO_NAMES[0],
             )
             tempo_value = Event(EventName.TEMPO_VALUE, item.start, 0)
-        elif tempo > self.midi_config.default_tempo_intervals[2].stop:
+        elif tempo > self.midi_config.DEFAULT_TEMPO_INTERVALS[2].stop:
             tempo_style = Event(
                 EventName.TEMPO_CLASS,
                 item.start,
-                self.midi_config.default_tempo_name[2],
+                self.midi_config.DEFAULT_TEMPO_NAMES[2],
             )
             tempo_value = Event(
                 EventName.TEMPO_VALUE,
                 item.start,
-                self.midi_config.default_tempo_intervals[2].stop
-                - self.midi_config.default_tempo_intervals[2].start
+                self.midi_config.DEFAULT_TEMPO_INTERVALS[2].stop
+                - self.midi_config.DEFAULT_TEMPO_INTERVALS[2].start
                 - 1,
             )
         tempo_events.append(tempo_style)

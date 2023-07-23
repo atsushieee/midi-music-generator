@@ -2,7 +2,7 @@
 import os
 
 from generative_music.domain.midi_data_processor.midi_representation import (
-    Event, EventName)
+    Config, Event, EventName)
 from generative_music.domain.midi_data_processor.preprocessor.preprocessor import \
     Preprocessor
 from tests.domain.midi_data_processor.preprocessor.conftest import \
@@ -24,9 +24,7 @@ class TestPreprocessor:
         This method is called before each test function is executed.
         """
         self.test_midi_path = create_test_midi()
-        self.preprocessor = Preprocessor(
-            self.test_midi_path, note_resolution=240, tempo_resolution=240
-        )
+        self.preprocessor = Preprocessor(self.test_midi_path, Config())
 
     def teardown_method(self):
         """Clean up the test environment by removing the test file.
@@ -60,7 +58,6 @@ class TestPreprocessor:
         # Check if there are any NOTE_ON, CHORD, or TEMPO events
         note_on_events = [event for event in events if event.name == EventName.NOTE_ON]
         chord_events = [event for event in events if event.name == EventName.CHORD]
-        print(chord_events)
         tempo_events = [
             event for event in events if event.name == EventName.TEMPO_CLASS
         ]

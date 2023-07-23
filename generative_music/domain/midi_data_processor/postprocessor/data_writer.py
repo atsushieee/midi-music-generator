@@ -21,17 +21,13 @@ class DataWriter:
     and writes a MIDI file with the corresponding notes, chords, and tempos.
     """
 
-    def __init__(self, midi_config: Config, ticks_per_bar: int = 1920):
+    def __init__(self, midi_config: Config):
         """Initialize the DataWriter class.
 
         Args:
-            midi_config (Config):
-                An instance of the Config class containing token mapping file paths.
-            ticks_per_bar (int):
-                The number of ticks per bar in the MIDI representation. Defalut is 1920.
+            midi_config (Config): The Configuration for MIDI representation.
         """
         self.midi_config = midi_config
-        self.ticks_per_bar = ticks_per_bar
 
     def write_midi_file(self, events: List[Event], output_path: Path):
         """Write a MIDI file based on the given events.
@@ -46,7 +42,7 @@ class DataWriter:
 
         midi = miditoolkit.midi.parser.MidiFile()
         # Four Four Time signature
-        midi.ticks_per_beat = int(self.ticks_per_bar / 4)
+        midi.ticks_per_beat = int(self.midi_config.TICKS_PER_BAR / 4)
         inst = miditoolkit.midi.containers.Instrument(0, is_drum=False)
         inst.notes = notes
         midi.instruments.append(inst)
@@ -94,12 +90,12 @@ class DataWriter:
                 and events[i + 3].name == EventName.NOTE_DURATION
             ):
                 velocity_index = events[i + 1].value
-                velocity = int(self.midi_config.default_velocity_bins[velocity_index])
+                velocity = int(self.midi_config.DEFAULT_VELOCITY_BINS[velocity_index])
                 pitch = events[i + 2].value
                 if not isinstance(pitch, int):
                     continue
                 duration_index = events[i + 3].value
-                duration = int(self.midi_config.default_duration_bins[duration_index])
+                duration = int(self.midi_config.DEFAULT_DURATION_BINS[duration_index])
                 notes.append((time, velocity, pitch, duration))
             elif (
                 events[i].name == EventName.POSITION
@@ -116,12 +112,12 @@ class DataWriter:
             ):
                 tempo_class_value = events[i + 1].value
                 tempo_value = events[i + 2].value
-                for j, tempo_name in enumerate(self.midi_config.default_tempo_name):
+                for j, tempo_name in enumerate(self.midi_config.DEFAULT_TEMPO_NAMES):
                     if not isinstance(tempo_value, int):
                         break
                     if tempo_class_value == tempo_name:
                         tempo = (
-                            self.midi_config.default_tempo_intervals[j].start
+                            self.midi_config.DEFAULT_TEMPO_INTERVALS[j].start
                             + tempo_value
                         )
                         tempos.append((time, tempo))

@@ -27,37 +27,55 @@ class TestDataWriter:
         This method is called before each test function is executed.
         """
         self.midi_config = Config()
+        # Position
+        first_beat = f"1/{self.midi_config.DEFAULT_FRACTION}"
+        second_beat = f"{self.midi_config.DEFAULT_FRACTION/4+1}/{self.midi_config.DEFAULT_FRACTION}"
+        third_beat = f"{self.midi_config.DEFAULT_FRACTION/2+1}/{self.midi_config.DEFAULT_FRACTION}"
         self.first_note_velocity_id = 10
         self.first_note_duration_id = 15
         self.test_events = [
             Event(EventName.BAR, 0, None),
-            Event(EventName.POSITION, 0, "1/16"),
-            Event(EventName.TEMPO_CLASS, 0, self.midi_config.default_tempo_name[1]),
+            Event(EventName.POSITION, 0, first_beat),
+            Event(EventName.TEMPO_CLASS, 0, self.midi_config.DEFAULT_TEMPO_NAMES[1]),
             Event(EventName.TEMPO_VALUE, 0, 30),
-            Event(EventName.POSITION, 0, "1/16"),
+            Event(EventName.POSITION, 0, first_beat),
             Event(EventName.CHORD, 0, "C:maj"),
-            Event(EventName.POSITION, 0, "1/16"),
+            Event(EventName.POSITION, 0, first_beat),
             Event(EventName.NOTE_VELOCITY, 0, self.first_note_velocity_id),
             Event(EventName.NOTE_ON, 0, 60),
             Event(EventName.NOTE_DURATION, 0, self.first_note_duration_id),
-            Event(EventName.POSITION, 480, "5/16"),
-            Event(EventName.NOTE_VELOCITY, 480, 11),
-            Event(EventName.NOTE_ON, 480, 64),
-            Event(EventName.NOTE_DURATION, 480, 11),
-            Event(EventName.BAR, 1920, None),
-            Event(EventName.POSITION, 1920, "1/16"),
-            Event(EventName.TEMPO_CLASS, 1920, self.midi_config.default_tempo_name[2]),
-            Event(EventName.TEMPO_VALUE, 1920, 30),
-            Event(EventName.POSITION, 1920, "1/16"),
-            Event(EventName.CHORD, 1920, "D:min"),
-            Event(EventName.POSITION, 1920, "1/16"),
-            Event(EventName.NOTE_VELOCITY, 1920, 8),
-            Event(EventName.NOTE_ON, 1920, 62),
-            Event(EventName.NOTE_DURATION, 1920, 15),
-            Event(EventName.POSITION, 2880, "9/16"),
-            Event(EventName.NOTE_VELOCITY, 2880, 9),
-            Event(EventName.NOTE_ON, 2880, 65),
-            Event(EventName.NOTE_DURATION, 2880, 7),
+            Event(
+                EventName.POSITION, int(self.midi_config.TICKS_PER_BAR / 4), second_beat
+            ),
+            Event(EventName.NOTE_VELOCITY, int(self.midi_config.TICKS_PER_BAR / 4), 11),
+            Event(EventName.NOTE_ON, int(self.midi_config.TICKS_PER_BAR / 4), 64),
+            Event(EventName.NOTE_DURATION, int(self.midi_config.TICKS_PER_BAR / 4), 11),
+            Event(EventName.BAR, self.midi_config.TICKS_PER_BAR, None),
+            Event(EventName.POSITION, self.midi_config.TICKS_PER_BAR, first_beat),
+            Event(
+                EventName.TEMPO_CLASS,
+                self.midi_config.TICKS_PER_BAR,
+                self.midi_config.DEFAULT_TEMPO_NAMES[2],
+            ),
+            Event(EventName.TEMPO_VALUE, self.midi_config.TICKS_PER_BAR, 30),
+            Event(EventName.POSITION, self.midi_config.TICKS_PER_BAR, first_beat),
+            Event(EventName.CHORD, self.midi_config.TICKS_PER_BAR, "D:min"),
+            Event(EventName.POSITION, self.midi_config.TICKS_PER_BAR, first_beat),
+            Event(EventName.NOTE_VELOCITY, self.midi_config.TICKS_PER_BAR, 8),
+            Event(EventName.NOTE_ON, self.midi_config.TICKS_PER_BAR, 62),
+            Event(EventName.NOTE_DURATION, self.midi_config.TICKS_PER_BAR, 15),
+            Event(
+                EventName.POSITION,
+                int(self.midi_config.TICKS_PER_BAR * 1.5),
+                third_beat,
+            ),
+            Event(
+                EventName.NOTE_VELOCITY, int(self.midi_config.TICKS_PER_BAR * 1.5), 9
+            ),
+            Event(EventName.NOTE_ON, int(self.midi_config.TICKS_PER_BAR * 1.5), 65),
+            Event(
+                EventName.NOTE_DURATION, int(self.midi_config.TICKS_PER_BAR * 1.5), 7
+            ),
         ]
         self.data_writer = DataWriter(self.midi_config)
 
@@ -81,16 +99,16 @@ class TestDataWriter:
         assert midi.tempo_changes[0].time == 0
         assert (
             midi.tempo_changes[0].tempo
-            == self.midi_config.default_tempo_intervals[1].start + 30
+            == self.midi_config.DEFAULT_TEMPO_INTERVALS[1].start + 30
         )
-        assert midi.tempo_changes[1].time == 1920
+        assert midi.tempo_changes[1].time == self.midi_config.TICKS_PER_BAR
         assert midi.tempo_changes[1].tempo == pytest.approx(
-            self.midi_config.default_tempo_intervals[2].start + 30, abs=1e-3
+            self.midi_config.DEFAULT_TEMPO_INTERVALS[2].start + 30, abs=1e-3
         )
         assert len(midi.markers) == 2
         assert midi.markers[0].time == 0
         assert midi.markers[0].text == "C:maj"
-        assert midi.markers[1].time == 1920
+        assert midi.markers[1].time == self.midi_config.TICKS_PER_BAR
         assert midi.markers[1].text == "D:min"
         assert len(midi.instruments[0].notes) == 4
         # Add assertions for note properties (start, end, pitch, velocity)
@@ -99,12 +117,10 @@ class TestDataWriter:
         assert midi.instruments[0].notes[0].start == 0
         assert (
             midi.instruments[0].notes[0].end
-            == self.midi_config.default_duration_bins[self.first_note_duration_id]
+            == self.midi_config.DEFAULT_DURATION_BINS[self.first_note_duration_id]
         )
-        print(self.midi_config.default_duration_bins[self.first_note_duration_id])
         assert midi.instruments[0].notes[0].pitch == 60
         assert (
             midi.instruments[0].notes[0].velocity
-            == self.midi_config.default_velocity_bins[self.first_note_velocity_id]
+            == self.midi_config.DEFAULT_VELOCITY_BINS[self.first_note_velocity_id]
         )
-        print(self.midi_config.default_velocity_bins[self.first_note_velocity_id])

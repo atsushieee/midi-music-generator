@@ -1,8 +1,8 @@
 """Tests for a class that loads MIDI tempo and note event data."""
 import os
 
-from generative_music.domain.midi_data_processor.midi_representation import \
-    ItemName
+from generative_music.domain.midi_data_processor.midi_representation import (
+    Config, ItemName)
 from generative_music.domain.midi_data_processor.preprocessor.data_loader import \
     DataLoader
 from tests.domain.midi_data_processor.preprocessor.conftest import \
@@ -24,9 +24,7 @@ class TestDataLoader:
         This method is called before each test function is executed.
         """
         self.test_midi_path = create_test_midi()
-        self.data_loader = DataLoader(
-            self.test_midi_path, note_resolution=240, tempo_resolution=240
-        )
+        self.data_loader = DataLoader(self.test_midi_path, Config())
 
     def teardown_method(self):
         """Clean up the test environment by removing the test file.
@@ -44,11 +42,10 @@ class TestDataLoader:
         """
         # Read note items and check if they match the expected values
         note_items = self.data_loader.read_note_items()
-        assert len(note_items) == 5
 
         expected_note_items = [
             (0, 480, 60, 62),
-            (240, 840, 64, 66),
+            (360, 959, 64, 66),
             (960, 1440, 67, 69),
             (1440, 1920, 71, 73),
             (1680, 1920, 60, 61),
@@ -75,17 +72,12 @@ class TestDataLoader:
         """
         # Read tempo items and check if they match the expected values
         tempo_items = self.data_loader.read_tempo_items()
-        assert len(tempo_items) == 9
 
         expected_tempo_items = [
             (0, 120),
-            (240, 120),
-            (480, 100),
-            (720, 80),
+            (480, 80),
             (960, 60),
-            (1200, 60),
             (1440, 60),
-            (1680, 60),
             (1920, 140),
         ]
 

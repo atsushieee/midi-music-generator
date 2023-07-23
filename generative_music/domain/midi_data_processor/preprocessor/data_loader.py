@@ -13,7 +13,7 @@ import miditoolkit
 import numpy as np
 
 from generative_music.domain.midi_data_processor.midi_representation import (
-    Item, ItemName)
+    Config, Item, ItemName)
 
 
 class DataLoader:
@@ -26,22 +26,16 @@ class DataLoader:
     into an appropriate format for easier handling and analysis.
     """
 
-    def __init__(self, file_path: Path, note_resolution=120, tempo_resolution=480):
+    def __init__(self, file_path: Path, midi_config: Config):
         """Initialize the DataLoader with the given file path and resolution.
 
         Args:
             file_path (Path): The path to the MIDI file to be loaded.
-            note_resolution (int):
-                The resolution (ticks per beat) of the note of MIDI file.
-                Default is 120.
-            tempo_resolution (int):
-                The resolution (ticks per beat) of the tempo of MIDI file.
-                Default is 480.
+            midi_config (Config): The Configuration for MIDI representation.
         """
         self.file_path = file_path
         self.midi_obj = miditoolkit.midi.parser.MidiFile(str(self.file_path))
-        self.note_resolution = note_resolution
-        self.tempo_resolution = tempo_resolution
+        self.midi_config = midi_config
 
     def read_note_items(self, track: Optional[int] = None) -> List[Item]:
         """Read and quantize note items from the MIDI file.
@@ -81,7 +75,7 @@ class DataLoader:
             note_items = self._create_note_items(notes)
 
         # Quantize note_items before returning
-        return self._quantize_items(note_items, self.note_resolution)
+        return self._quantize_items(note_items, self.midi_config.MIN_RESOLUTION)
 
     def read_tempo_items(self) -> List[Item]:
         """Read and quantize tempo changes items from the MIDI file.
@@ -107,7 +101,9 @@ class DataLoader:
             for tempo in tempo_changes
         ]
         # Quantize note_items before returning
-        quantized_tempo = self._quantize_items(tempo_items, self.tempo_resolution)
+        quantized_tempo = self._quantize_items(
+            tempo_items, self.midi_config.TEMPO_RESOLUTION
+        )
         return self._process_tempo_items(quantized_tempo)
 
     def _create_note_items(
@@ -188,7 +184,7 @@ class DataLoader:
                 with tempo values at each resolution step.
         """
         max_tick = tempo_items[-1].start
-        wanted_ticks = np.arange(0, max_tick + 1, self.tempo_resolution)
+        wanted_ticks = np.arange(0, max_tick + 1, self.midi_config.TEMPO_RESOLUTION)
         output = []
         current_tempo_item_index = 0
         for tick in wanted_ticks:

@@ -2,6 +2,8 @@
 import json
 from pathlib import Path
 
+from generative_music.domain.midi_data_processor.midi_representation import \
+    Config
 from generative_music.domain.midi_data_processor.midi_tokenization.mapping_generator import \
     MappingGenerator
 
@@ -22,7 +24,8 @@ class TestMappingGenerator:
         and generating the data and reversed_data dictionaries.
         This method is called before each test function is executed.
         """
-        self.mapping_generator = MappingGenerator()
+        self.midi_config = Config()
+        self.mapping_generator = MappingGenerator(self.midi_config)
         self.data = self.mapping_generator.data
         self.reversed_data = self.mapping_generator._reverse_data()
 
@@ -30,7 +33,7 @@ class TestMappingGenerator:
         """Test if the generated data dictionary contains the expected keys."""
         assert isinstance(self.data, dict)
         assert "Bar_None" in self.data
-        assert "Position_1/16" in self.data
+        assert f"Position_1/{self.midi_config.DEFAULT_FRACTION}" in self.data
         assert "Chord_C:maj" in self.data
         assert "Tempo Class_fast" in self.data
         assert "Tempo Value_0" in self.data
