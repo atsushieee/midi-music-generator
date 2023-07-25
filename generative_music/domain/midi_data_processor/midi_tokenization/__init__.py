@@ -6,5 +6,7 @@ including the creation of token mappings, tokenization and detokenization proces
 
 from generative_music.domain.midi_data_processor.midi_tokenization.mapping_generator import \
     MappingGenerator
+from generative_music.domain.midi_data_processor.midi_tokenization.tokenizer import \
+    Tokenizer
 
-__all__ = ["MappingGenerator"]
+__all__ = ["MappingGenerator", "Tokenizer"]
