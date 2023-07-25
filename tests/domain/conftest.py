@@ -1,19 +1,14 @@
-"""MIDI Data Preprocessing: Common Functions Module.
-
-This module contains common functions
-used for testing MIDI data preprocessing.
-"""
-import tempfile
-from pathlib import Path
-
+"""The common Functions Module."""
+import pytest
 from miditoolkit.midi import parser as midi_parser
 
 
-def create_test_midi() -> Path:
+@pytest.fixture
+def create_sample_midi() -> midi_parser.MidiFile:
     """Create a test MIDI file with specified tempo changes and notes.
 
     Returns:
-        Path: The path of the temporary MIDI file created.
+        midi_parser.MidiFile: The MidiFile object created.
     """
     midi_obj = midi_parser.MidiFile()
     midi_obj.tempo_changes = [
@@ -32,10 +27,4 @@ def create_test_midi() -> Path:
         midi_parser.Note(71, 73, 1440, 1920),
         midi_parser.Note(60, 61, 1675, 1915),
     ]
-    # Create a temporary file
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mid")
-    temp_file.close()
-    # Dump MIDI data to the temporary file
-    midi_obj.dump(temp_file.name)
-
-    return Path(temp_file.name)
+    return midi_obj

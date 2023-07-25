@@ -26,29 +26,33 @@ class TestDatasetPreparer:
         self.val_ratio = 0.2
         self.test_ratio = 0.1
 
-    def _create_temp_midi_files(self, dir_path: Path, num_files: int):
+    def _create_temp_midi_files(
+        self, create_sample_midi: midi_parser.MidiFile, dir_path: Path, num_files: int
+    ):
         """Creates temporary MIDI files for testing.
 
         Args:
+            create_sample_midi (midi_parser.MidiFile):
+                sample MidiFile object to be used in the tests.
             dir_path (Path):
                 The directory path where the temporary MIDI files will be created.
             num_files (int): The number of temporary MIDI files to create.
         """
         for i in range(num_files):
-            midi_obj = midi_parser.MidiFile()
-            midi_obj.instruments.append(midi_parser.Instrument(0))
-            midi_obj.instruments[0].notes = [midi_parser.Note(60, 62, 0, 480)]
+            midi_obj = create_sample_midi
             filepath = dir_path / f"tmp_{i:03}.mid"
             midi_obj.dump(str(filepath))
 
-    def test_prepare(self, tmp_path: Path):
+    def test_prepare(self, create_sample_midi: midi_parser.MidiFile, tmp_path: Path):
         """Test if the prepare method correctly preprocesses and tokenizes the MIDI files.
 
         Args:
+            create_sample_midi (midi_parser.MidiFile):
+                sample MidiFile object to be used in the tests.
             tmp_path (Path): The temporary directory path provided by the pytest fixture.
         """
         # Create temporary MIDI files
-        self._create_temp_midi_files(tmp_path, num_files=10)
+        self._create_temp_midi_files(create_sample_midi, tmp_path, num_files=10)
 
         dataset_preparer = DatasetPreparer(
             tmp_path,

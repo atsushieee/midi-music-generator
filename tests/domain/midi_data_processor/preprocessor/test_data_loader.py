@@ -1,12 +1,13 @@
 """Tests for a class that loads MIDI tempo and note event data."""
-import os
+from pathlib import Path
+
+import pytest
+from miditoolkit.midi import parser as midi_parser
 
 from generative_music.domain.midi_data_processor.midi_representation import (
     Config, ItemName)
 from generative_music.domain.midi_data_processor.preprocessor.data_loader import \
     DataLoader
-from tests.domain.midi_data_processor.preprocessor.conftest import \
-    create_test_midi
 
 
 class TestDataLoader:
@@ -16,22 +17,22 @@ class TestDataLoader:
     and if the loaded data matches the expected values.
     """
 
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup_module(self, create_sample_midi: midi_parser.MidiFile, tmp_path: Path):
         """Initialize the DataLoader tests.
 
         Set up the test environment by creating test midi file
         and initializing the DataLoader instance.
-        This method is called before each test function is executed.
-        """
-        self.test_midi_path = create_test_midi()
-        self.data_loader = DataLoader(self.test_midi_path, Config())
 
-    def teardown_method(self):
-        """Clean up the test environment by removing the test file.
-
-        This method is called after each test function is executed.
+        Args:
+            create_sample_midi (midi_parser.MidiFile):
+                sample MidiFile object to be used in the tests.
+            tmp_path (Path): The temporary directory path provided by the pytest fixture.
         """
-        os.remove(self.test_midi_path)
+        test_midi_obj = create_sample_midi
+        self.test_midi_filepath = tmp_path / "tmp.mid"
+        test_midi_obj.dump(str(self.test_midi_filepath))
+        self.data_loader = DataLoader(self.test_midi_filepath, Config())
 
     def test_read_note_items(self):
         """Test if the note items are correctly read and match the expected values.

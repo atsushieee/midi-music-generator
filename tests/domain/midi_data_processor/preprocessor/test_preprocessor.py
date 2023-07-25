@@ -1,12 +1,13 @@
 """Tests for a class that preprocess MIDI file."""
-import os
+from pathlib import Path
+
+import pytest
+from miditoolkit.midi import parser as midi_parser
 
 from generative_music.domain.midi_data_processor.midi_representation import (
     Config, Event, EventName)
 from generative_music.domain.midi_data_processor.preprocessor.preprocessor import \
     Preprocessor
-from tests.domain.midi_data_processor.preprocessor.conftest import \
-    create_test_midi
 
 
 class TestPreprocessor:
@@ -16,22 +17,22 @@ class TestPreprocessor:
     and if the generated events match the expected values.
     """
 
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup_module(self, create_sample_midi: midi_parser.MidiFile, tmp_path: Path):
         """Initialize the Preprocessor tests.
 
         Set up the test environment by creating a test MIDI file
         and initializing the Preprocessor instance.
-        This method is called before each test function is executed.
-        """
-        self.test_midi_path = create_test_midi()
-        self.preprocessor = Preprocessor(self.test_midi_path, Config())
 
-    def teardown_method(self):
-        """Clean up the test environment by removing the test file.
-
-        This method is called after each test function is executed.
+        Args:
+            create_sample_midi (midi_parser.MidiFile):
+                sample MidiFile object to be used in the tests.
+            tmp_path (Path): The temporary directory path provided by the pytest fixture.
         """
-        os.remove(self.test_midi_path)
+        test_midi_obj = create_sample_midi
+        self.test_midi_filepath = tmp_path / "tmp.mid"
+        test_midi_obj.dump(str(self.test_midi_filepath))
+        self.preprocessor = Preprocessor(self.test_midi_filepath, Config())
 
     def test_process(self):
         """Test if the Preprocessor's process method generates the correct events.
