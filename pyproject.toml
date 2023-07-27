@@ -13,6 +13,7 @@ numpy = "1.23.5"
 miditoolkit = "^0.1.16"
 scipy = "^1.11.1"
 matplotlib = "^3.7.2"
+tqdm = "^4.65.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.10.0"

@@ -12,6 +12,33 @@ class MidiTFRecordsWriter:
     from tokenized MIDI data and writing them to TFRecord files.
     """
 
+    def write_tfrecords(self, tokenized_midis: List[List[int]], output_path: Path):
+        """Write the given tokenized MIDI data to a TFRecord file.
+
+        Args:
+            tokenized_midis (List[List[int]]):
+                A list of tokenized MIDI files,
+                where each file is represented as a list of integers.
+            output_path (Path):
+                The output file path where the TFRecord file will be written.
+        """
+        self._ensure_output_directory_exists(output_path)
+
+        with tf.io.TFRecordWriter(str(output_path)) as writer:
+            for tokenized_midi in tokenized_midis:
+                tf_example = self._create_tf_example(tokenized_midi)
+                writer.write(tf_example.SerializeToString())
+
+    def _ensure_output_directory_exists(self, output_path: Path):
+        """Ensure the output directory exists, create it if not.
+
+        Args:
+            output_path (Path):
+                The output file path where the TFRecord file will be written.
+        """
+        output_directory = output_path.parent
+        output_directory.mkdir(parents=True, exist_ok=True)
+
     def _create_tf_example(self, tokenized_midi: List[int]) -> tf.train.Example:
         """Create a tf.train.Example object from the given tokenized MIDI data.
 
@@ -29,18 +56,3 @@ class MidiTFRecordsWriter:
             )
         }
         return tf.train.Example(features=tf.train.Features(feature=feature))
-
-    def write_tfrecords(self, tokenized_midis: List[List[int]], output_path: Path):
-        """Write the given tokenized MIDI data to a TFRecord file.
-
-        Args:
-            tokenized_midis (List[List[int]]):
-                A list of tokenized MIDI files,
-                where each file is represented as a list of integers.
-            output_path (Path):
-                The output file path where the TFRecord file will be written.
-        """
-        with tf.io.TFRecordWriter(str(output_path)) as writer:
-            for tokenized_midi in tokenized_midis:
-                tf_example = self._create_tf_example(tokenized_midi)
-                writer.write(tf_example.SerializeToString())

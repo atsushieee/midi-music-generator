@@ -26,23 +26,6 @@ class TestDatasetPreparer:
         self.val_ratio = 0.2
         self.test_ratio = 0.1
 
-    def _create_temp_midi_files(
-        self, create_sample_midi: midi_parser.MidiFile, dir_path: Path, num_files: int
-    ):
-        """Creates temporary MIDI files for testing.
-
-        Args:
-            create_sample_midi (midi_parser.MidiFile):
-                sample MidiFile object to be used in the tests.
-            dir_path (Path):
-                The directory path where the temporary MIDI files will be created.
-            num_files (int): The number of temporary MIDI files to create.
-        """
-        for i in range(num_files):
-            midi_obj = create_sample_midi
-            filepath = dir_path / f"tmp_{i:03}.mid"
-            midi_obj.dump(str(filepath))
-
     def test_prepare(self, create_sample_midi: midi_parser.MidiFile, tmp_path: Path):
         """Test if the prepare method correctly preprocesses and tokenizes the MIDI files.
 
@@ -72,3 +55,20 @@ class TestDatasetPreparer:
         assert all(len(data) > 0 for data in train_data)
         assert all(len(data) > 0 for data in val_data)
         assert all(len(data) > 0 for data in test_data)
+
+    def _create_temp_midi_files(
+        self, create_sample_midi: midi_parser.MidiFile, dir_path: Path, num_files: int
+    ):
+        """Creates temporary MIDI files for testing.
+
+        Args:
+            create_sample_midi (midi_parser.MidiFile):
+                sample MidiFile object to be used in the tests.
+            dir_path (Path):
+                The directory path where the temporary MIDI files will be created.
+            num_files (int): The number of temporary MIDI files to create.
+        """
+        for i in range(num_files):
+            midi_obj = create_sample_midi
+            filepath = dir_path / f"tmp_{i:03}.mid"
+            midi_obj.dump(str(filepath))

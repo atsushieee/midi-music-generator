@@ -24,3 +24,7 @@ test:
 .PHONY: token-mapping
 token-mapping:
 	poetry run python generative_music/service/midi_mapping_service.py
+
+.PHONY: dataset
+dataset:
+	poetry run python generative_music/service/dataset_service.py

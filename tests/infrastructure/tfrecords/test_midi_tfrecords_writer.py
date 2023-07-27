@@ -18,6 +18,18 @@ class TestTFRecordsWriter:
         """
         self.tf_records_writer = MidiTFRecordsWriter()
 
+    def test_ensure_output_directory_exists(self, tmp_path: Path):
+        """Test if the output directory is correctly created if it does not exist.
+
+        Args:
+            tmp_path (Path): The temporary directory path provided by the pytest fixture.
+        """
+        output_directory = tmp_path / "output_directory"
+        output_path = output_directory / "test.tfrecord"
+        self.tf_records_writer._ensure_output_directory_exists(output_path)
+
+        assert output_directory.exists()
+
     def test_create_tf_example(self):
         """Test if the tf.train.Example object is created correctly.
 

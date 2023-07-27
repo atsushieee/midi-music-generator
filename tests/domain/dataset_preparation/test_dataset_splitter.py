@@ -5,6 +5,8 @@ import tempfile
 from collections import defaultdict
 from pathlib import Path
 
+import pytest
+
 from generative_music.domain.dataset_preparation.dataset_splitter import \
     DatasetSplitter
 
@@ -54,6 +56,21 @@ class TestDatasetSplitter:
         """
         shutil.rmtree(self.data_dir)
 
+    def test_check_directory_exists_invalid_directory(self, tmp_path: Path):
+        """Test if an invalid directory is correctly recognized.
+
+        Check if a ValueError exception is raised when an invalid directory is provided
+        to the DatasetPreparer class and if the error message is as expected.
+
+        Args:
+            tmp_path (Path): The temporary directory path provided by the pytest fixture.
+        """
+        data_dir = tmp_path / "non_existent_directory"
+        with pytest.raises(
+            ValueError, match=r"The specified directory .* does not exist."
+        ):
+            DatasetSplitter(data_dir, self.train_ratio, self.val_ratio, self.test_ratio)
+
     def test_is_midi_file(self):
         """Check if the _is_midi_file method can correctly identify MIDI files.
 
@@ -73,6 +90,17 @@ class TestDatasetSplitter:
         # Test with a non-MIDI file
         non_midi_file = Path("example.txt")
         assert not self.splitter._is_midi_file(non_midi_file)
+
+    def test_check_file_list_length(self, tmp_path: Path):
+        """Test if the DatasetSplitter raises an error when there are no MIDI files.
+
+        Args:
+            tmp_path (Path): The temporary directory path provided by the pytest fixture.
+        """
+        with pytest.raises(
+            ValueError, match="No MIDI files found in the specified data directory."
+        ):
+            DatasetSplitter(tmp_path, self.train_ratio, self.val_ratio, self.test_ratio)
 
     def test_split_data(self):
         """Check if the data is correctly split into train, validation and test sets.

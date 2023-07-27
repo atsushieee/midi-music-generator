@@ -2,6 +2,8 @@
 from pathlib import Path
 from typing import List, Tuple
 
+from tqdm import tqdm
+
 from generative_music.domain.dataset_preparation.dataset_splitter import \
     DatasetSplitter
 from generative_music.domain.midi_data_processor.midi_representation import \
@@ -59,7 +61,7 @@ class DatasetPreparer:
         # Tokenize the data
         tokenized_data = {}
         for split, filepaths in split_data.items():
-            tokenized_data[split] = self._process_files(filepaths)
+            tokenized_data[split] = self._process_files(filepaths, split)
 
         return (
             tokenized_data["train"],
@@ -67,19 +69,21 @@ class DatasetPreparer:
             tokenized_data["test"],
         )
 
-    def _process_files(self, filepaths: List[str]) -> List[List[int]]:
+    def _process_files(self, filepaths: List[str], split: str) -> List[List[int]]:
         """Preprocess and tokenize the MIDI files.
 
         Args:
             filepaths (List[str]):
                 A list of filepaths for the MIDI files to be processed.
+            split (str):
+                The dataset split currently being processed (train/validation/test).
 
         Returns:
             List[List[int]]: A list of tokenized events for each MIDI file.
         """
         tokenized_data = []
         tokenizer = Tokenizer(self.midi_config)
-        for filepath in filepaths:
+        for filepath in tqdm(filepaths, desc=f"Processing {split} MIDI files"):
             preprocessor = Preprocessor(Path(filepath), self.midi_config)
             events = preprocessor.process()
             tokenized_events = [tokenizer.tokenize(event) for event in events]

@@ -31,20 +31,11 @@ class DatasetSplitter:
         self.train_ratio = train_ratio
         self.val_ratio = val_ratio
         self.test_ratio = test_ratio
+        self._check_directory_exists(data_dir)
         self.file_list = [
             f for f in data_dir.iterdir() if f.is_file() and self._is_midi_file(f)
         ]
-
-    def _is_midi_file(self, file: Path) -> bool:
-        """Check if the given file is a MIDI file.
-
-        Args:
-            file (Path): The file to be checked.
-
-        Returns:
-            bool: True if the file is a MIDI file, False otherwise.
-        """
-        return file.suffix.lower() in (".midi", ".mid")
+        self._check_file_list_length()
 
     def split_data(self) -> Dict[str, List[str]]:
         """Split the data into train, validation and test sets based on the specified ratios.
@@ -85,3 +76,31 @@ class DatasetSplitter:
             for split, files in split_data.items():
                 for file in files:
                     writer.writerow([file, split])
+
+    def _check_directory_exists(self, directory: Path):
+        """Check if the specified directory exists.
+
+        Args:
+            directory (Path): The directory to check.
+
+        Raises:
+            ValueError: If the specified directory does not exist.
+        """
+        if not directory.exists():
+            raise ValueError(f"The specified directory '{directory}' does not exist.")
+
+    def _is_midi_file(self, file: Path) -> bool:
+        """Check if the given file is a MIDI file.
+
+        Args:
+            file (Path): The file to be checked.
+
+        Returns:
+            bool: True if the file is a MIDI file, False otherwise.
+        """
+        return file.suffix.lower() in (".midi", ".mid")
+
+    def _check_file_list_length(self):
+        """Check if the file_list length is greater than 0, raise an error if not."""
+        if len(self.file_list) <= 0:
+            raise ValueError("No MIDI files found in the specified data directory.")
