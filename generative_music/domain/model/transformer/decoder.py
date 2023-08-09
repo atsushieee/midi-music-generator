@@ -72,10 +72,9 @@ class Decoder(tf.keras.Model):
         Args:
             x (tf.Tensor): Input tensor with shape (batch_size, seq_len).
             mask (tf.Tensor, optional):
-                Mask tensor with shape (1, 1, seq_len, seq_len).
-                The first two dimensions (1, 1) are added to enable broadcasting
-                with the attention logits tensor,
-                where the first 1 is for batch_size and the second 1 is for num_heads.
+                Mask tensor with shape (batch_size, 1, seq_len, seq_len).
+                The second dimension (1) corresponds to the number of attention heads
+                and is used for broadcasting with the attention logits tensor.
                 If provided, the part of attention scores will be masked.
                 Defaults to None.
 

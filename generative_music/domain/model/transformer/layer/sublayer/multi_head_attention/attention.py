@@ -53,9 +53,9 @@ class Attention(tf.keras.layers.Layer):
                 or (batch_size, num_heads, seq_len, dim_v / num_heads)
                 for Multi-head Attention.
             mask (tf.Tensor, optional):
-                Mask tensor with shape
-                (1, seq_len, seq_len) when not using multi-head attention
-                or (1, 1, seq_len, seq_len) when using multi-head attention.
+                Mask tensor with shape (batch_size, 1, seq_len, seq_len).
+                The second dimension (1) corresponds to the number of attention heads
+                and is used for broadcasting with the attention logits tensor.
                 If provided, the part of attention scores will be masked.
                 Defaults to None.
             training (bool, optional):

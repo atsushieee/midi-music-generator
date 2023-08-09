@@ -45,11 +45,18 @@ class TestBatchGenerator:
         """
         dataset = self.batch_generator.generate_batches()
         for batch in dataset.take(1):
-            src, tgt = batch
+            src, tgt, mask = batch
             assert src.shape == (self.batch_size, self.seq_length - 1)
             assert tgt.shape == (self.batch_size, self.seq_length - 1, self.vocab_size)
+            assert mask.shape == (
+                self.batch_size,
+                1,
+                self.seq_length - 1,
+                self.seq_length - 1,
+            )
             assert src.dtype == tf.int32
             assert tgt.dtype == tf.int32
+            assert mask.dtype == tf.float32
 
     def test_process_sequences(self):
         """Check the processed source and target sequences.
@@ -61,7 +68,7 @@ class TestBatchGenerator:
         for eager_mode in [True, False]:
             # Enable/disable eager execution
             tf.config.run_functions_eagerly(eager_mode)
-            src, tgt = self.batch_generator._process_sequences(sequences)
+            src, tgt, mask = self.batch_generator._process_sequences(sequences)
             # Convert sequences[:, 1:] to one-hot representation
             tgt_expected = tf.one_hot(
                 sequences[:, 1:], depth=self.batch_generator.vocab_size, dtype=tf.int32
@@ -257,3 +264,76 @@ class TestBatchGenerator:
                 )
             )
             assert tf.reduce_all(tf.equal(modified_sequence, expected_sequence))
+
+    def test_generate_look_ahead_mask(self):
+        """Check the generation of the look-ahead mask.
+
+        Tests if the function correctly generates the look-ahead mask
+        to prevent the model from attending to future tokens in the sequence.
+        """
+        expected_mask = tf.constant(
+            [[0, 1, 1], [0, 0, 1], [0, 0, 0]],
+            dtype=tf.float32,
+        )
+        # 生成されたマスクが期待されるマスクと同じであることを確認
+        assert tf.reduce_all(
+            tf.equal(self.batch_generator.look_ahead_mask, expected_mask)
+        )
+
+    def test_generate_padding_mask(self):
+        """Check the generation of padding mask.
+
+        Tests if the function correctly generates the padding mask
+        to mask out the padding tokens in the input sequences.
+        """
+        input_batch = tf.constant(
+            [[1, 2, 3, 0], [4, 5, 6, 7]],
+            dtype=tf.int32,
+        )
+        expected_padding_mask = tf.constant(
+            [
+                [[[0, 0, 0, 1]]],
+                [[[0, 0, 0, 0]]],
+            ],
+            dtype=tf.float32,
+        )
+        for eager_mode in [True, False]:
+            # Enable/disable eager execution
+            tf.config.run_functions_eagerly(eager_mode)
+            padding_mask = self.batch_generator._generate_padding_mask(input_batch)
+            assert tf.reduce_all(tf.equal(padding_mask, expected_padding_mask))
+
+    def test_generate_combined_mask(self):
+        """Check the generation of combined mask.
+
+        Tests if the function correctly generates the combined mask
+        which includes both the padding mask and the look-ahead mask.
+        """
+        input_batch = tf.constant(
+            [[1, 2, 0], [1, 0, 0]],
+            dtype=tf.int32,
+        )
+        expected_combined_mask = tf.constant(
+            [
+                [
+                    [
+                        [0, 1, 1],
+                        [0, 0, 1],
+                        [0, 0, 1],
+                    ]
+                ],
+                [
+                    [
+                        [0, 1, 1],
+                        [0, 1, 1],
+                        [0, 1, 1],
+                    ]
+                ],
+            ],
+            dtype=tf.float32,
+        )
+        for eager_mode in [True, False]:
+            # Enable/disable eager execution
+            tf.config.run_functions_eagerly(eager_mode)
+            combined_mask = self.batch_generator._generate_combined_mask(input_batch)
+            assert tf.reduce_all(tf.equal(combined_mask, expected_combined_mask))

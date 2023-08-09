@@ -30,6 +30,8 @@ class TestDecoderLayer:
             tf.ones((seq_length, seq_length)), -1, 0
         )
         mask = uncasted_mask[tf.newaxis, tf.newaxis, :, :]
+        # Repeat the mask tensor along the batch dimension to match the batch_size
+        mask = tf.repeat(mask, repeats=batch_size, axis=0)
 
         decoder_layer = DecoderLayer(d_model, num_heads, ff_dim)
         output = decoder_layer(input_tensor, mask)

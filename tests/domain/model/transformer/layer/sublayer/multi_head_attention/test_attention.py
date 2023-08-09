@@ -29,7 +29,7 @@ test_data = [
             [0, 6, 0, 3],
             [1.996998, 0.009007, 8.986489, 1.003002],
         ],
-        [[0, 1], [0, 0]],
+        [[[[0, 1], [0, 0]]]],
     ),
 ]
 
@@ -59,7 +59,7 @@ class TestAttention:
         self,
         attention_weights_expected: List[List[float]],
         output_expected: List[List[float]],
-        mask: List[List[int]],
+        mask: List[List[List[List[int]]]],
     ):
         """Test the attention layer without dropout applied.
 
@@ -70,7 +70,7 @@ class TestAttention:
                 The expected attention weights without dropout.
             output_expected (List[List[float]]):
                 The expected output tensor without dropout.
-            mask (List[List[float]]):
+            mask (List[List[List[List[int]]]]):
                 The mask to be applied, if any.
                 Use 1 for positions to be masked and 0 for positions to be kept.
         """
@@ -95,7 +95,12 @@ class TestAttention:
         )
 
     @pytest.mark.parametrize("attention_weights_expected, _, mask", test_data)
-    def test_attention_with_dropout(self, attention_weights_expected, _, mask):
+    def test_attention_with_dropout(
+        self,
+        attention_weights_expected: List[List[float]],
+        _: List[List[float]],
+        mask: List[List[List[List[int]]]],
+    ):
         """Test the attention layer with dropout applied.
 
         This test checks if the attention weights tensor
@@ -105,7 +110,7 @@ class TestAttention:
                 The expected attention weights with dropout.
             _ (List[List[float]]):
                 A placeholder for the output values, which are not tested.
-            mask (List[List[float]]):
+            mask (List[List[List[List[int]]]]):
                 The mask to be applied, if any.
                 Use 1 for positions to be masked and 0 for positions to be kept.
         """
