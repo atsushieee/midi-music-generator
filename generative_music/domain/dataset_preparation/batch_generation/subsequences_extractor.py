@@ -1,107 +1,34 @@
-"""A module for generating batches of sequences."""
-from typing import List, Tuple
-
+"""A module for extracting subsequences from batch sequences."""
 import tensorflow as tf
 
 
-class BatchGenerator:
-    """A class for generating batches of sequences from a dataset.
+class SubsequencesExtractor:
+    """A class for extracting subsequences from batch sequences.
 
-    This class creates batches of sequences with specified length,
-    and shuffles and pads the training data as needed.
+    This class is responsible for breaking input sequences into smaller subsequences,
+    and padding them with the specified padding token as needed.
     """
 
     def __init__(
-        self,
-        data: List[List[int]],
-        batch_size: int,
-        seq_length: int,
-        padding_id: int,
-        start_token_id: int,
-        vocab_size: int,
+        self, subseq_length: tf.Tensor, padding_id: tf.Tensor, start_token_id: tf.Tensor
     ):
-        """Initialize the BatchGenerator instance.
+        """Initialize the SubsequencesExtractor instance.
 
         Args:
-            data (List[List[int]]): The input data as a list of tokenized sequences.
-            batch_size (int): The number of sequences in a batch.
-            seq_length (int): The length of each sequence in a batch.
-            padding_id (int): The token ID used for padding.
-            start_token_id (int): The token ID used to indicate the start of a sequence.
-            vocab_size (int):
-                The size of the number of unique words or tokens in the dataset.
+            subseq_length (tf.Tensor):
+                A tensor containing the length of each subsequence to be extracted.
+            padding_id (tf.Tensor):
+                A tensor containing the token ID used for padding.
+            start_token_id (tf.Tensor):
+                A tensor containing the token ID used
+                to indicate the start of a subsequence.
         """
-        self.data = data
-        self.batch_size = batch_size
-        self.subseq_length = tf.constant(seq_length, dtype=tf.int32)
-        self.padding_id = tf.constant(padding_id, dtype=tf.int32)
-        self.start_token_id = tf.constant(start_token_id, dtype=tf.int32)
-        self.vocab_size = vocab_size
-        self.look_ahead_mask = self._generate_look_ahead_mask()
-
-    def generate_batches(self) -> tf.data.Dataset:
-        """Generate batches of sequences from the input data.
-
-        Returns:
-            tf.data.Dataset:
-                The dataset containing the generated batches, behaving like a generator.
-        """
-        dataset = tf.data.Dataset.from_generator(
-            lambda: iter(self.data), output_types=tf.int32, output_shapes=(None,)
-        )
-        # Shuffle the dataset.
-        # Adjust buffer_size based on the actual data size and machine specifications.
-        dataset = dataset.shuffle(buffer_size=len(self.data))
-        # When batching a dataset with variable shapes,
-        # it is necessary to use Dataset.padded_batch.
-        dataset = dataset.padded_batch(self.batch_size, padding_values=self.padding_id)
-        dataset = dataset.map(
-            self._process_sequences,
-            num_parallel_calls=tf.data.experimental.AUTOTUNE,
-        )
-        # Prefetch optimizes the pipeline by overlapping data preprocessing and model training.
-        # AUTOTUNE automatically determines the optimal buffer size, improving training speed.
-        dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
-        return dataset
+        self.subseq_length = subseq_length
+        self.padding_id = padding_id
+        self.start_token_id = start_token_id
 
     @tf.function
-    def _process_sequences(
-        self, sequences: tf.Tensor
-    ) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
-        """Process sequences to create the source and target sequences.
-
-        This function takes the input sequences and creates two new sequences:
-        the source sequence with all elements except the last one,
-        and the target sequence with all elements except the first one,
-        which is then one-hot encoded.
-        This is useful for language modeling tasks,
-        where the goal is to predict the next token given a sequence of tokens.
-
-        Args:
-            sequences (tf.Tensor):
-                The input sequence as a TensorFlow tensor with shape
-                (batch_size, max_sequence_length).
-
-        Returns:
-            Tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
-                The source sequences as a TensorFlow tensor
-                with shape (batch_size, max_sequence_length - 1),
-                and the one-hot encoded target sequences as a TensorFlow tensor
-                with shape (batch_size, max_sequence_length - 1, vocab_size),
-                and the combined mask as a TensorFlow tensor
-                with shape (batch_size, 1, seq_length, seq_length).
-        """
-        subsequences = self._extract_subsequences(sequences)
-        src = subsequences[:, :-1]
-        # One-hot encode tgt
-        tgt = subsequences[:, 1:]
-        tgt = tf.one_hot(tgt, depth=self.vocab_size, dtype=tf.int32)
-
-        combined_mask = self._generate_combined_mask(src)
-        return src, tgt, combined_mask
-
-    @tf.function
-    def _extract_subsequences(self, sequences: tf.Tensor) -> tf.Tensor:
+    def extract_subsequences(self, sequences: tf.Tensor) -> tf.Tensor:
         """Extract subsequences of the given length from the input sequence.
 
         Args:
@@ -304,60 +231,3 @@ class BatchGenerator:
 
         # Return the modified_sequence with trailing values replaced by padding tokens
         return modified_sequence
-
-    def _generate_look_ahead_mask(self) -> tf.Tensor:
-        """Generate the look-ahead mask for the source sequence.
-
-        Returns:
-            tf.Tensor:
-                The look-ahead mask as a TensorFlow tensor with shape (seq_length, seq_length).
-        """
-        # Create a look-ahead mask with ones.
-        look_ahead_mask = 1 - tf.linalg.band_part(
-            tf.ones((self.subseq_length - 1, self.subseq_length - 1)), -1, 0
-        )
-        return look_ahead_mask
-
-    @tf.function
-    def _generate_padding_mask(self, sequences: tf.Tensor) -> tf.Tensor:
-        """Generate the padding mask for the input batch.
-
-        Args:
-            sequences (tf.Tensor):
-                The input batch of tokenized sequences with shape (batch_size, seq_length).
-
-        Returns:
-            tf.Tensor:
-                The padding mask as a TensorFlow tensor
-                with shape (batch_size, 1, 1, seq_length).
-                The second and third dimensions (1, 1) are added
-                to enable broadcasting with the attention logits tensor,
-                where the second 1 is for num_heads and the third 1 is for seq_length.
-                The padding mask is used to mask out the padding tokens
-                in the input sequences.
-        """
-        padding_mask = tf.cast(tf.math.equal(sequences, self.padding_id), tf.float32)
-        # Expand dimensions to match the shape required for the attention mechanism.
-        padding_mask = padding_mask[:, tf.newaxis, tf.newaxis, :]
-        return padding_mask
-
-    @tf.function
-    def _generate_combined_mask(self, sequences: tf.Tensor) -> tf.Tensor:
-        """Generate the combined mask for the input batch.
-
-        Args:
-            sequences (tf.Tensor):
-                The input batch of tokenized sequences with shape (batch_size, seq_length).
-
-        Returns:
-            tf.Tensor:
-                The combined mask as a TensorFlow tensor
-                with shape (batch_size, 1, seq_length, seq_length).
-                The second dimension (1) corresponds to the number of attention heads
-                and is used for broadcasting with the attention logits tensor.
-                The combined mask includes both the padding mask and the look-ahead mask,
-                which prevents the model from attending to future tokens in the sequences.
-        """
-        padding_mask = self._generate_padding_mask(sequences)
-        combined_mask = tf.maximum(padding_mask, self.look_ahead_mask)
-        return combined_mask
