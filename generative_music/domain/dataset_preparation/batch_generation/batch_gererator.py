@@ -23,7 +23,6 @@ class BatchGenerator:
         seq_length: int,
         padding_id: int,
         start_token_id: int,
-        vocab_size: int,
     ):
         """Initialize the BatchGenerator instance.
 
@@ -33,15 +32,12 @@ class BatchGenerator:
             seq_length (int): The length of each sequence in a batch.
             padding_id (int): The token ID used for padding.
             start_token_id (int): The token ID used to indicate the start of a sequence.
-            vocab_size (int):
-                The size of the number of unique words or tokens in the dataset.
         """
         self.data = data
         self.batch_size = batch_size
         self.subseq_length = tf.constant(seq_length, dtype=tf.int32)
         self.padding_id = tf.constant(padding_id, dtype=tf.int32)
         self.start_token_id = tf.constant(start_token_id, dtype=tf.int32)
-        self.vocab_size = vocab_size
         self.mask_generator = MaskGenerator(self.subseq_length, self.padding_id)
         self.subsequences_extractor = SubsequencesExtractor(
             self.subseq_length, self.padding_id, self.start_token_id
@@ -80,8 +76,7 @@ class BatchGenerator:
 
         This function takes the input sequences and creates two new sequences:
         the source sequence with all elements except the last one,
-        and the target sequence with all elements except the first one,
-        which is then one-hot encoded.
+        and the target sequence with all elements except the first one.
         This is useful for language modeling tasks,
         where the goal is to predict the next token given a sequence of tokens.
 
@@ -92,18 +87,13 @@ class BatchGenerator:
 
         Returns:
             Tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
-                The source sequences as a TensorFlow tensor
-                with shape (batch_size, max_sequence_length - 1),
-                and the one-hot encoded target sequences as a TensorFlow tensor
-                with shape (batch_size, max_sequence_length - 1, vocab_size),
-                and the combined mask as a TensorFlow tensor
-                with shape (batch_size, 1, seq_length, seq_length).
+                - The source sequences with shape (batch_size, max_sequence_length - 1)
+                - The target sequences with shape (batch_size, max_sequence_length - 1)
+                - The combined mask with shape (batch_size, 1, seq_length, seq_length)
         """
         subsequences = self.subsequences_extractor.extract_subsequences(sequences)
         src = subsequences[:, :-1]
-        # One-hot encode tgt
         tgt = subsequences[:, 1:]
-        tgt = tf.one_hot(tgt, depth=self.vocab_size, dtype=tf.int32)
 
         combined_mask = self.mask_generator.generate_combined_mask(src)
         return src, tgt, combined_mask

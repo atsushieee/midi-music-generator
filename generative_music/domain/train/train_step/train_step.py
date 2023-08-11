@@ -42,7 +42,7 @@ class TrainStep:
             x_batch (tf.Tensor):
                 Input tensor with shape (batch_size, seq_length).
             y_batch (tf.Tensor):
-                Ground truth tensor with shape (batch_size, seq_length, vocab_size).
+                Ground truth tensor with shape (batch_size, seq_length).
 
         Returns:
             tf.Tensor: The computed loss for the given batch.

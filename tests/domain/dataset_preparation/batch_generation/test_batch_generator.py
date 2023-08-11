@@ -24,14 +24,12 @@ class TestBatchGenerator:
         self.seq_length = 4
         padding_id = 0
         start_token_id = 1
-        self.vocab_size = 20
         self.batch_generator = BatchGenerator(
             self.data,
             self.batch_size,
             self.seq_length,
             padding_id,
             start_token_id,
-            self.vocab_size,
         )
 
     def test_generate_batches(self):
@@ -44,7 +42,7 @@ class TestBatchGenerator:
         for batch in dataset.take(1):
             src, tgt, mask = batch
             assert src.shape == (self.batch_size, self.seq_length - 1)
-            assert tgt.shape == (self.batch_size, self.seq_length - 1, self.vocab_size)
+            assert tgt.shape == (self.batch_size, self.seq_length - 1)
             assert mask.shape == (
                 self.batch_size,
                 1,
@@ -66,9 +64,5 @@ class TestBatchGenerator:
             # Enable/disable eager execution
             tf.config.run_functions_eagerly(eager_mode)
             src, tgt, mask = self.batch_generator._process_sequences(sequences)
-            # Convert sequences[:, 1:] to one-hot representation
-            tgt_expected = tf.one_hot(
-                sequences[:, 1:], depth=self.batch_generator.vocab_size, dtype=tf.int32
-            )
             assert tf.reduce_all(tf.equal(src, sequences[:, :-1]))
-            assert tf.reduce_all(tf.equal(tgt, tgt_expected))
+            assert tf.reduce_all(tf.equal(tgt, sequences[:, 1:]))
