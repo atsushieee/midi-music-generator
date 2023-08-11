@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import tensorflow as tf
 
-from generative_music.domain.train.train_step.train_step import TrainStep
+from generative_music.domain.train.train_step import TrainStep
 
 
 class TestTrainStep:

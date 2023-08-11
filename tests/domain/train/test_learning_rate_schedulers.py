@@ -1,7 +1,7 @@
 """Tests for the Learning Rate Scheduler."""
 import math
 
-from generative_music.domain.train.train_step.learning_rate_schedulers import \
+from generative_music.domain.train.learning_rate_schedulers import \
     WarmupCosineDecayScheduler
 
 

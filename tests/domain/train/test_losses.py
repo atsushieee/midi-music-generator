@@ -2,7 +2,7 @@
 import pytest
 import tensorflow as tf
 
-from generative_music.domain.train.train_step.losses import \
+from generative_music.domain.train.losses import \
     LabelSmoothedCategoricalCrossentropy
 
 test_data = [
