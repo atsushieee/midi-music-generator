@@ -6,7 +6,9 @@ and reading them back, which can be used for efficient storage
 and input pipelines in machine learning applications.
 """
 
+from generative_music.infrastructure.tfrecords.midi_tfrecords_reader import \
+    MidiTFRecordsReader
 from generative_music.infrastructure.tfrecords.midi_tfrecords_writer import \
     MidiTFRecordsWriter
 
-__all__ = ["MidiTFRecordsWriter"]
+__all__ = ["MidiTFRecordsReader", "MidiTFRecordsWriter"]

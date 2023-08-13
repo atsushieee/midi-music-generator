@@ -21,6 +21,16 @@ class MidiTFRecordsWriter:
                 where each file is represented as a list of integers.
             output_path (Path):
                 The output file path where the TFRecord file will be written.
+
+        Notes:
+            Serialization is the process of converting a data structure or object
+            into a sequence of bytes that can be easily stored or transmitted.
+            Serialization has several benefits:
+                - It allows for efficient serialization and deserialization,
+                　which can lead to faster processing times.
+                - The resulting serialized data is generally smaller in size
+                　compared to other formats like JSON or XML,
+                　which can help reduce storage and bandwidth requirements.
         """
         self._ensure_output_directory_exists(output_path)
 
