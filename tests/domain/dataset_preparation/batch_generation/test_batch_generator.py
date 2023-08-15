@@ -19,17 +19,23 @@ class TestBatchGenerator:
         Set up the data, batch size, sequence length, padding ID and start token ID.
         This method is called before each test function is executed.
         """
-        self.data = [[1, 2, 3, 1], [1, 4, 1, 5, 1, 6, 7, 1, 8], [1, 9, 10, 11, 12, 13]]
+        data = [[1, 2, 3, 1], [1, 4, 1, 5, 1, 6, 7, 1, 8], [1, 9, 10, 11, 12, 13]]
+        dataset = tf.data.Dataset.from_generator(
+            lambda: iter(data),
+            output_signature=tf.TensorSpec(shape=(None,), dtype=tf.int32),
+        )
         self.batch_size = 2
         self.seq_length = 4
         padding_id = 0
-        start_token_id = 1
+        bar_start_token_id = 1
+        buffer_size = len(data)
         self.batch_generator = BatchGenerator(
-            self.data,
+            dataset,
             self.batch_size,
             self.seq_length,
             padding_id,
-            start_token_id,
+            bar_start_token_id,
+            buffer_size,
         )
 
     def test_generate_batches(self):

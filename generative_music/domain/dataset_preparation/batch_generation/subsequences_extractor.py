@@ -10,7 +10,10 @@ class SubsequencesExtractor:
     """
 
     def __init__(
-        self, subseq_length: tf.Tensor, padding_id: tf.Tensor, start_token_id: tf.Tensor
+        self,
+        subseq_length: tf.Tensor,
+        padding_id: tf.Tensor,
+        bar_start_token_id: tf.Tensor,
     ):
         """Initialize the SubsequencesExtractor instance.
 
@@ -19,13 +22,13 @@ class SubsequencesExtractor:
                 A tensor containing the length of each subsequence to be extracted.
             padding_id (tf.Tensor):
                 A tensor containing the token ID used for padding.
-            start_token_id (tf.Tensor):
+            bar_start_token_id (tf.Tensor):
                 A tensor containing the token ID used
-                to indicate the start of a subsequence.
+                to indicate the start of a new bar (musical measure) in the sequence.
         """
         self.subseq_length = subseq_length
         self.padding_id = padding_id
-        self.start_token_id = start_token_id
+        self.bar_start_token_id = bar_start_token_id
 
     @tf.function
     def extract_subsequences(self, sequences: tf.Tensor) -> tf.Tensor:
@@ -63,8 +66,8 @@ class SubsequencesExtractor:
         Returns:
             tf.Tensor: The extracted a subsequence as a tensor of token IDs.
         """
-        # Find the indices of start_token_id in the sequence
-        start_indices = tf.where(tf.equal(sequence, self.start_token_id))
+        # Find the indices of bar_start_token_id in the sequence
+        start_indices = tf.where(tf.equal(sequence, self.bar_start_token_id))
         # Reshape the start_indices tensor to a 1D list
         start_indices = tf.reshape(start_indices, [-1])
         # Cast start_indices from tf.int64 to tf.int32
@@ -164,10 +167,10 @@ class SubsequencesExtractor:
         that is greater than or equal to the last index of the sequence,
         the end index is set to the last index of the sequence.
         2. If the element in the sequence at the position (end_index + 1)
-        is equal to the start_token_id, the end index remains unchanged.
-        3. Check if there is any occurrence of start_token_id within the subsequence
+        is equal to the bar_start_token_id, the end index remains unchanged.
+        3. Check if there is any occurrence of bar_start_token_id within the subsequence
         from (start_index + 1) to (end_index + 1). If not, return the current end_index.
-        4. Otherwise, the end index is set to the last occurrence of start_token_id
+        4. Otherwise, the end index is set to the last occurrence of bar_start_token_id
         within the subsequence from (start_index + 1) to (end_index + 1).
 
         Args:
@@ -181,11 +184,15 @@ class SubsequencesExtractor:
         if end_index >= tf.shape(sequence)[0] - 1:
             return tf.shape(sequence)[0] - 1
         else:
-            next_token_is_start = tf.equal(sequence[end_index + 1], self.start_token_id)
+            next_token_is_start = tf.equal(
+                sequence[end_index + 1], self.bar_start_token_id
+            )
 
         def use_last_matching_index() -> tf.Tensor:
             matching_indices = tf.where(
-                tf.equal(sequence[start_index + 1 : end_index + 1], self.start_token_id)
+                tf.equal(
+                    sequence[start_index + 1 : end_index + 1], self.bar_start_token_id
+                )
             )
             if tf.size(matching_indices) == 0:
                 return end_index

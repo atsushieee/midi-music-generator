@@ -1,5 +1,5 @@
 """A module for generating batches of sequences."""
-from typing import List, Tuple
+from typing import Tuple
 
 import tensorflow as tf
 
@@ -18,29 +18,35 @@ class BatchGenerator:
 
     def __init__(
         self,
-        data: List[List[int]],
+        dataset: tf.data.Dataset,
         batch_size: int,
         seq_length: int,
         padding_id: int,
-        start_token_id: int,
+        bar_start_token_id: int,
+        buffer_size: int,
     ):
         """Initialize the BatchGenerator instance.
 
         Args:
-            data (List[List[int]]): The input data as a list of tokenized sequences.
+            dataset (tf.data.Dataset):
+                A tf.data.Dataset object containing the tokenized MIDI list data.
             batch_size (int): The number of sequences in a batch.
             seq_length (int): The length of each sequence in a batch.
             padding_id (int): The token ID used for padding.
-            start_token_id (int): The token ID used to indicate the start of a sequence.
+            bar_start_token_id (int):
+                The token ID used to indicate
+                the start of a new bar (musical measure) in the sequence.
+            buffer_size (int): The size of the buffer used for shuffling the dataset.
         """
-        self.data = data
+        self.dataset = dataset
         self.batch_size = batch_size
         self.subseq_length = tf.constant(seq_length, dtype=tf.int32)
         self.padding_id = tf.constant(padding_id, dtype=tf.int32)
-        self.start_token_id = tf.constant(start_token_id, dtype=tf.int32)
+        self.bar_start_token_id = tf.constant(bar_start_token_id, dtype=tf.int32)
+        self.buffer_size = buffer_size
         self.mask_generator = MaskGenerator(self.subseq_length, self.padding_id)
         self.subsequences_extractor = SubsequencesExtractor(
-            self.subseq_length, self.padding_id, self.start_token_id
+            self.subseq_length, self.padding_id, self.bar_start_token_id
         )
 
     def generate_batches(self) -> tf.data.Dataset:
@@ -50,12 +56,9 @@ class BatchGenerator:
             tf.data.Dataset:
                 The dataset containing the generated batches, behaving like a generator.
         """
-        dataset = tf.data.Dataset.from_generator(
-            lambda: iter(self.data), output_types=tf.int32, output_shapes=(None,)
-        )
         # Shuffle the dataset.
         # Adjust buffer_size based on the actual data size and machine specifications.
-        dataset = dataset.shuffle(buffer_size=len(self.data))
+        dataset = self.dataset.shuffle(buffer_size=self.buffer_size)
         # When batching a dataset with variable shapes,
         # it is necessary to use Dataset.padded_batch.
         dataset = dataset.padded_batch(self.batch_size, padding_values=self.padding_id)

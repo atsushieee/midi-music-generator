@@ -24,9 +24,9 @@ class TestSubsequencesExtractor:
         self.data = [[1, 2, 3, 1], [1, 4, 1, 5, 1, 6, 7, 1, 8], [1, 9, 10, 11, 12, 13]]
         self.seq_length = tf.constant(4, dtype=tf.int32)
         self.padding_id = tf.constant(0, dtype=tf.int32)
-        start_token_id = tf.constant(1, dtype=tf.int32)
+        bar_start_token_id = tf.constant(1, dtype=tf.int32)
         self.subsequence_extractor = SubsequencesExtractor(
-            self.seq_length, self.padding_id, start_token_id
+            self.seq_length, self.padding_id, bar_start_token_id
         )
 
     @pytest.mark.parametrize(

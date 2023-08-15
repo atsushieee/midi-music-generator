@@ -28,3 +28,7 @@ token-mapping:
 .PHONY: dataset
 dataset:
 	poetry run python generative_music/service/dataset_service.py
+
+.PHONY: train
+train:
+	poetry run python generative_music/service/train_service.py
