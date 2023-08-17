@@ -27,6 +27,7 @@ class TestTrainStep:
         mock_optimizer = MagicMock(spec=tf.keras.optimizers.Optimizer)
         mock_x_batch = MagicMock(spec=tf.Tensor)
         mock_y_batch = MagicMock(spec=tf.Tensor)
+        mock_mask = MagicMock(spec=tf.Tensor)
         mock_y_pred = MagicMock(spec=tf.Tensor)
         mock_loss_value = MagicMock(spec=tf.Tensor)
 
@@ -46,10 +47,10 @@ class TestTrainStep:
             ]
             # Call result within the with statement
             # to ensure correct behavior of the mocked GradientTape.
-            result = train_step(mock_x_batch, mock_y_batch)
+            result = train_step(mock_x_batch, mock_y_batch, mock_mask)
 
         # Verify the calls
-        mock_model.assert_called_once_with(mock_x_batch)
+        mock_model.assert_called_once_with(mock_x_batch, mock_mask)
         mock_loss.assert_called_once_with(mock_y_batch, mock_y_pred)
         assert result == mock_loss_value
 

@@ -5,6 +5,8 @@ which implements a custom training step for Keras models.
 This allows for more control over the training process
 and can be used in conjunction with custom loss functions and optimizers.
 """
+from typing import Optional
+
 import tensorflow as tf
 
 
@@ -35,7 +37,9 @@ class TrainStep:
         self.loss = loss
         self.optimizer = optimizer
 
-    def __call__(self, x_batch: tf.Tensor, y_batch: tf.Tensor) -> tf.Tensor:
+    def __call__(
+        self, x_batch: tf.Tensor, y_batch: tf.Tensor, mask: Optional[tf.Tensor] = None
+    ) -> tf.Tensor:
         """Compute the loss and apply gradients for the given batch.
 
         Args:
@@ -43,12 +47,18 @@ class TrainStep:
                 Input tensor with shape (batch_size, seq_length).
             y_batch (tf.Tensor):
                 Ground truth tensor with shape (batch_size, seq_length).
+            mask (tf.Tensor, optional):
+                Mask tensor with shape (batch_size, 1, seq_len, seq_len).
+                The second dimension (1) corresponds to the number of attention heads
+                and is used for broadcasting with the attention logits tensor.
+                If provided, the part of attention scores will be masked.
+                Defaults to None.
 
         Returns:
             tf.Tensor: The computed loss for the given batch.
         """
         with tf.GradientTape() as tape:
-            y_pred = self.model(x_batch)
+            y_pred = self.model(x_batch, mask)
             loss_value = self.loss(y_batch, y_pred)
         grads = tape.gradient(loss_value, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))

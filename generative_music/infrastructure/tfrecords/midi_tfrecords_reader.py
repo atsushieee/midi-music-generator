@@ -77,4 +77,7 @@ class MidiTFRecordsReader:
         # "tokenized_midi" is a tf.SparseTensor due to the use of tf.io.VarLenFeature.
         # However, tf.SparseTensor can be difficult to handle in subsequent processes.
         # Therefore, we convert it to a dense tf.Tensor using tf.sparse.to_dense.
-        return tf.sparse.to_dense(parsed_features["tokenized_midi"])
+        tokenized_midi = tf.sparse.to_dense(parsed_features["tokenized_midi"])
+        # Cast tokenized_midi from int64 to int32
+        tokenized_midi = tf.cast(tokenized_midi, tf.int32)
+        return tokenized_midi
