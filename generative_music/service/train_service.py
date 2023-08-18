@@ -8,6 +8,7 @@ It is designed to be flexible and easy to use for a variety of different models.
 from pathlib import Path
 
 import tensorflow as tf
+import yaml
 from tqdm import tqdm
 
 from generative_music.domain.model.transformer import Decoder
@@ -112,7 +113,13 @@ if __name__ == "__main__":
     epochs = 100
     # The number of score files for the train.
     buffer_size = 542
-    data_dir = Path("generative_music/data/tfrecords")
+    # Load the config file
+    with open("generative_music/config/dataset.yml", "r") as f:
+        config = yaml.safe_load(f)
+    tfrecords_dir = Path(config["paths"]["tfrecords_dir"])
+    train_basename = config["dataset_basenames"]["train"]
+    val_basename = config["dataset_basenames"]["val"]
+
     # TODO Automatically retrieve from json file
     vocab_size = 335
     bar_start_token_id = 0
@@ -129,7 +136,14 @@ if __name__ == "__main__":
     lr_scheduler = WarmupCosineDecayScheduler()
     optimizer = tf.keras.optimizers.Adam(learning_rate=lr_scheduler)
     data_loader = TrainDataLoader(
-        data_dir, batch_size, seq_len, padding_id, bar_start_token_id, buffer_size
+        batch_size,
+        seq_len,
+        padding_id,
+        bar_start_token_id,
+        buffer_size,
+        tfrecords_dir,
+        train_basename,
+        val_basename,
     )
     train_service = TrainService(
         transformer_decoder, loss, optimizer, data_loader, epochs

@@ -14,23 +14,46 @@ class DatasetSplitter:
     """
 
     def __init__(
-        self, data_dir: Path, train_ratio: float, val_ratio: float, test_ratio: float
+        self,
+        data_dir: Path,
+        csv_filepath: Path,
+        train_ratio: float,
+        val_ratio: float,
+        test_ratio: float,
+        train_basename: str = "train",
+        val_basename: str = "validation",
+        test_basename: str = "test",
     ):
         """Initialize the DatasetSplitter with the data directory and the split ratios.
 
         Args:
             data_dir (Path):
                 The path to the data directory containing the files to be split.
+            csv_filepath (Path):
+                The path where the CSV file containing the split information will be saved.
             train_ratio (float):
                 The ratio of the data to be used for the train set.
             val_ratio (float):
                 The ratio of the data to be used for the validation set.
             test_ratio (float):
                 The ratio of the data to be used for the test set.
+            train_basename (str):
+                The base name of the training file (without extension).
+                Default is "train".
+            val_basename (str):
+                The base name of the validation file (without extension).
+                Default is "validation".
+            test_basename (str):
+                The base name of the test file (without extension).
+                Default is "test".
         """
+        self.output_csv = csv_filepath
         self.train_ratio = train_ratio
         self.val_ratio = val_ratio
         self.test_ratio = test_ratio
+        self.train_basename = train_basename
+        self.val_basename = val_basename
+        self.test_basename = test_basename
         self._check_directory_exists(data_dir)
         self.file_list = [
             f for f in data_dir.iterdir() if f.is_file() and self._is_midi_file(f)
@@ -55,22 +78,21 @@ class DatasetSplitter:
         split_data = defaultdict(list)
         for i, file in enumerate(self.file_list):
             if i < num_train_files:
-                split_data["train"].append(str(file))
+                split_data[self.train_basename].append(str(file))
             elif i < num_train_files + num_val_files:
-                split_data["validation"].append(str(file))
+                split_data[self.val_basename].append(str(file))
             else:
-                split_data["test"].append(str(file))
+                split_data[self.test_basename].append(str(file))
         return split_data
 
-    def create_split_csv(self, split_data: Dict[str, List[str]], output_csv: Path):
+    def create_split_csv(self, split_data: Dict[str, List[str]]):
         """Create a CSV file containing the file paths for each split.
 
         Args:
             split_data (Dict[str, List[str]]):
                 A dictionary containing the file paths for each split.
-            output_csv (Path): The path to the output CSV file.
         """
-        with output_csv.open(mode="w", newline="", encoding="utf-8") as csv_file:
+        with self.output_csv.open(mode="w", newline="", encoding="utf-8") as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow(["filepath", "split"])
             for split, files in split_data.items():

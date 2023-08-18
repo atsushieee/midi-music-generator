@@ -25,30 +25,51 @@ class DatasetPreparer:
         self,
         data_dir: Path,
         midi_config: Config,
+        csv_filepath: Path,
         train_ratio: float,
         val_ratio: float,
         test_ratio: float,
+        train_basename: str = "train",
+        val_basename: str = "validation",
+        test_basename: str = "test",
     ):
         """Initialize the DatasetPreparer instance.
 
         Args:
             data_dir (Path): The directory containing the MIDI files.
             midi_config (Config): The configuration object for MIDI processing.
+            csv_filepath (Path):
+                The path where the CSV file containing the split information will be saved.
             train_ratio (float): The ratio of the dataset to be used for training.
             val_ratio (float): The ratio of the dataset to be used for validation.
             test_ratio (float): The ratio of the dataset to be used for testing.
+            train_basename (str):
+                The base name of the training file (without extension).
+                Default is "train".
+            val_basename (str):
+                The base name of the validation file (without extension).
+                Default is "validation".
+            test_basename (str):
+                The base name of the test file (without extension).
+                Default is "test".
         """
-        self.splitter = DatasetSplitter(data_dir, train_ratio, val_ratio, test_ratio)
+        self.splitter = DatasetSplitter(
+            data_dir,
+            csv_filepath,
+            train_ratio,
+            val_ratio,
+            test_ratio,
+            train_basename,
+            val_basename,
+            test_basename,
+        )
         self.midi_config = midi_config
+        self.train_basename = train_basename
+        self.val_basename = val_basename
+        self.test_basename = test_basename
 
-    def prepare(
-        self, csv_filepath: Path
-    ) -> Tuple[List[List[int]], List[List[int]], List[List[int]]]:
+    def prepare(self) -> Tuple[List[List[int]], List[List[int]], List[List[int]]]:
         """Split the MIDI files into train, validation and test datasets, and tokenize.
-
-        Args:
-            csv_filepath (Path):
-                The path where the CSV file containing the split information will be saved.
 
         Returns:
             Tuple[List[List[int]], List[List[int]], List[List[int]]]:
@@ -56,7 +77,7 @@ class DatasetPreparer:
         """
         split_data = self.splitter.split_data()
         # Write the filepaths and their corresponding splits to a CSV file
-        self.splitter.create_split_csv(split_data, csv_filepath)
+        self.splitter.create_split_csv(split_data)
 
         # Tokenize the data
         tokenized_data = {}
@@ -64,9 +85,9 @@ class DatasetPreparer:
             tokenized_data[split] = self._process_files(filepaths, split)
 
         return (
-            tokenized_data["train"],
-            tokenized_data["validation"],
-            tokenized_data["test"],
+            tokenized_data[self.train_basename],
+            tokenized_data[self.val_basename],
+            tokenized_data[self.test_basename],
         )
 
     def _process_files(self, filepaths: List[str], split: str) -> List[List[int]]:

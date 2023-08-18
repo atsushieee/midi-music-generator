@@ -28,12 +28,12 @@ class TestTrainDataLoader:
         tfrecords_dir = tmp_path / "tfrecords"
         tfrecords_dir.mkdir()
         data_loader = TrainDataLoader(
-            tfrecords_dir=tfrecords_dir,
             batch_size=32,
             seq_length=100,
             padding_id=0,
             bar_start_token_id=1,
             buffer_size=1000,
+            tfrecords_dir=tfrecords_dir,
         )
 
         mock_dataset = mocker.MagicMock()

@@ -42,11 +42,16 @@ class TestDatasetSplitter:
         """
         self.num_files = 100
         self.data_dir = create_test_files(self.num_files)
+        self.output_csv = Path(tempfile.mktemp(suffix=".csv"))
         self.train_ratio = 0.7
         self.val_ratio = 0.2
         self.test_ratio = 0.1
         self.splitter = DatasetSplitter(
-            self.data_dir, self.train_ratio, self.val_ratio, self.test_ratio
+            self.data_dir,
+            self.output_csv,
+            self.train_ratio,
+            self.val_ratio,
+            self.test_ratio,
         )
 
     def teardown_method(self):
@@ -55,6 +60,7 @@ class TestDatasetSplitter:
         This method is called after each test function is executed.
         """
         shutil.rmtree(self.data_dir)
+        self.output_csv.unlink(missing_ok=True)
 
     def test_check_directory_exists_invalid_directory(self, tmp_path: Path):
         """Test if an invalid directory is correctly recognized.
@@ -69,7 +75,13 @@ class TestDatasetSplitter:
         with pytest.raises(
             ValueError, match=r"The specified directory .* does not exist."
         ):
-            DatasetSplitter(data_dir, self.train_ratio, self.val_ratio, self.test_ratio)
+            DatasetSplitter(
+                data_dir,
+                self.output_csv,
+                self.train_ratio,
+                self.val_ratio,
+                self.test_ratio,
+            )
 
     def test_is_midi_file(self):
         """Check if the _is_midi_file method can correctly identify MIDI files.
@@ -100,7 +112,13 @@ class TestDatasetSplitter:
         with pytest.raises(
             ValueError, match="No MIDI files found in the specified data directory."
         ):
-            DatasetSplitter(tmp_path, self.train_ratio, self.val_ratio, self.test_ratio)
+            DatasetSplitter(
+                tmp_path,
+                self.output_csv,
+                self.train_ratio,
+                self.val_ratio,
+                self.test_ratio,
+            )
 
     def test_split_data(self):
         """Check if the data is correctly split into train, validation and test sets.
@@ -125,12 +143,11 @@ class TestDatasetSplitter:
         to check for consistency between the split files and the CSV content.
         """
         split_data = self.splitter.split_data()
-        output_csv = Path(tempfile.mktemp(suffix=".csv"))
-        self.splitter.create_split_csv(split_data, output_csv)
-        assert output_csv.is_file()
+        self.splitter.create_split_csv(split_data)
+        assert self.output_csv.is_file()
 
         written_data = defaultdict(list)
-        with output_csv.open(mode="r", newline="", encoding="utf-8") as csv_file:
+        with self.output_csv.open(mode="r", newline="", encoding="utf-8") as csv_file:
             reader = csv.reader(csv_file)
             header = next(reader)
             assert header == ["filepath", "split"]
@@ -143,5 +160,3 @@ class TestDatasetSplitter:
         for split in split_data:
             assert len(split_data[split]) == len(written_data[split])
             assert set(split_data[split]) == set(written_data[split])
-
-        output_csv.unlink()

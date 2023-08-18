@@ -37,16 +37,17 @@ class TestDatasetPreparer:
         # Create temporary MIDI files
         self._create_temp_midi_files(create_sample_midi, tmp_path, num_files=10)
 
+        tmp_csv_filepath = tmp_path / "all_splits.csv"
         dataset_preparer = DatasetPreparer(
             tmp_path,
             self.midi_config,
+            tmp_csv_filepath,
             self.train_ratio,
             self.val_ratio,
             self.test_ratio,
         )
 
-        tmp_csv_filepath = tmp_path / "all_splits.csv"
-        train_data, val_data, test_data = dataset_preparer.prepare(tmp_csv_filepath)
+        train_data, val_data, test_data = dataset_preparer.prepare()
 
         # Check if the data is preprocessed and tokenized correctly
         assert all(isinstance(data, list) for data in train_data)
