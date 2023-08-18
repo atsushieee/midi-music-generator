@@ -6,8 +6,8 @@ from miditoolkit.midi import parser as midi_parser
 
 from generative_music.domain.midi_data_processor.midi_representation import (
     Config, ItemName)
-from generative_music.domain.midi_data_processor.preprocessor.data_loader import \
-    DataLoader
+from generative_music.domain.midi_data_processor.preprocessor.midi_data_loader import \
+    MidiDataLoader
 
 
 class TestDataLoader:
@@ -32,7 +32,7 @@ class TestDataLoader:
         test_midi_obj = create_sample_midi
         self.test_midi_filepath = tmp_path / "tmp.mid"
         test_midi_obj.dump(str(self.test_midi_filepath))
-        self.data_loader = DataLoader(self.test_midi_filepath, Config())
+        self.data_loader = MidiDataLoader(self.test_midi_filepath, Config())
 
     def test_read_note_items(self):
         """Test if the note items are correctly read and match the expected values.

@@ -16,7 +16,7 @@ from generative_music.domain.midi_data_processor.midi_representation import (
     Config, Item, ItemName)
 
 
-class DataLoader:
+class MidiDataLoader:
     """A class for loading and processing MIDI files.
 
     This class handles the loading and processing of MIDI files

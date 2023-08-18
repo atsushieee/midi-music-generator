@@ -6,10 +6,10 @@ from generative_music.domain.midi_data_processor.midi_representation import (
     Config, Event)
 from generative_music.domain.midi_data_processor.preprocessor.chord_extractor import \
     ChordExtractor
-from generative_music.domain.midi_data_processor.preprocessor.data_loader import \
-    DataLoader
 from generative_music.domain.midi_data_processor.preprocessor.item2event_converter import \
     Item2EventConverter
+from generative_music.domain.midi_data_processor.preprocessor.midi_data_loader import \
+    MidiDataLoader
 
 
 class Preprocessor:
@@ -43,7 +43,7 @@ class Preprocessor:
             List[Event]: A list of events generated from the MIDI file.
         """
         # Initialize DataLoader, ChordExtractor, and Item2EventConverter
-        data_loader = DataLoader(self.midi_file_path, self.midi_config)
+        data_loader = MidiDataLoader(self.midi_file_path, self.midi_config)
         chord_extractor = ChordExtractor(self.midi_config)
 
         # Read and process notes and tempo items
