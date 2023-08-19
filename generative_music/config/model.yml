@@ -1,0 +1,19 @@
+test:
+    num_layers: 4
+    d_model: 128
+    num_heads: 8
+    ff_dim: 512
+    seq_len: 512
+    batch_size: 4
+    epochs: 100
+    buffer_size: 542
+
+gpt-2:
+    num_layers: 12
+    d_model: 768
+    num_heads: 12
+    ff_dim: 1024
+    seq_len: 2048
+    batch_size: 4
+    epochs: 100
+    buffer_size: 542

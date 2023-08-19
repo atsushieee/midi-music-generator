@@ -31,4 +31,4 @@ dataset:
 
 .PHONY: train
 train:
-	poetry run python generative_music/service/train_service.py
+	poetry run python generative_music/service/train_service.py --model_env test

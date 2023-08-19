@@ -5,7 +5,10 @@ This class manages the training and validation process,
 utilizing training and validation data loaded from TensorFlow records using a DataLoader instance.
 It is designed to be flexible and easy to use for a variety of different models.
 """
+import argparse
+import json
 from pathlib import Path
+from typing import Any, Dict
 
 import tensorflow as tf
 import yaml
@@ -96,34 +99,63 @@ class TrainService:
         return total_loss / total_steps
 
 
+def load_config(config_path: str) -> Dict[str, Any]:
+    """Load a configuration file in YAML format.
+
+    Args:
+    config_path (str): The path to the configuration file.
+
+    Returns:
+    Dict: The loaded configuration.
+    """
+    with open(config_path, "r") as ymlfile:
+        cfg = yaml.safe_load(ymlfile)
+    return cfg
+
+
+def load_json(json_path: str) -> Dict[str, int]:
+    """Load a JSON file.
+
+    Args:
+    json_path (str): The path to the JSON file.
+
+    Returns:
+    Dict: The loaded JSON data.
+    """
+    with open(json_path, "r") as jsonfile:
+        data = json.load(jsonfile)
+    return data
+
+
 if __name__ == "__main__":
     # Set the hyper parameter
-    # TODO Fetch via Args or implement config
-    # num_layers = 12
-    # d_model = 768
-    # num_heads = 12
-    # ff_dim = 1024
-    # seq_len = 2048
-    num_layers = 4
-    d_model = 128
-    num_heads = 8
-    ff_dim = 512
-    seq_len = 512
-    batch_size = 4
-    epochs = 100
-    # The number of score files for the train.
-    buffer_size = 542
-    # Load the config file
-    with open("generative_music/config/dataset.yml", "r") as f:
-        config = yaml.safe_load(f)
-    tfrecords_dir = Path(config["paths"]["tfrecords_dir"])
-    train_basename = config["dataset_basenames"]["train"]
-    val_basename = config["dataset_basenames"]["val"]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model_env", type=str, default="test")
+    args = parser.parse_args()
 
-    # TODO Automatically retrieve from json file
-    vocab_size = 335
-    bar_start_token_id = 0
-    padding_id = 334
+    # Load the model config file
+    cfg_model = load_config("generative_music/config/model.yml")[args.model_env]
+    num_layers = cfg_model["num_layers"]
+    d_model = cfg_model["d_model"]
+    num_heads = cfg_model["num_heads"]
+    ff_dim = cfg_model["ff_dim"]
+    seq_len = cfg_model["seq_len"]
+    batch_size = cfg_model["batch_size"]
+    epochs = cfg_model["epochs"]
+    # The number of score files for the train.
+    buffer_size = cfg_model["buffer_size"]
+
+    # Load the dataset config file
+    cfg_dataset = load_config("generative_music/config/dataset.yml")
+    tfrecords_dir = Path(cfg_dataset["paths"]["tfrecords_dir"])
+    train_basename = cfg_dataset["dataset_basenames"]["train"]
+    val_basename = cfg_dataset["dataset_basenames"]["val"]
+
+    # Load the JSON file
+    json_data = load_json("generative_music/data/event2id.json")
+    vocab_size = len(json_data) + 1
+    bar_start_token_id = json_data["Bar_None"]
+    padding_id = max(json_data.values()) + 1
     # Instantiate the model
     transformer_decoder = Decoder(
         num_layers, d_model, num_heads, ff_dim, vocab_size, seq_len
