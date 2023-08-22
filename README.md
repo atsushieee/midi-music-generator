@@ -1,5 +1,7 @@
 # MIDI Music Generation:
 1. Using the predetermined MIDI representation settings, map each representation to an ID for training purposes.
+2. Split the data into train/validation/test sets and convert each into tfrecords.
+3. Train to be able to generate MIDI data from scratch.
 
 ---
 
@@ -7,9 +9,9 @@
   - [Getting started](#getting-started)
     - [Prerequisites](#prerequisites)
       - [Preparation for poetry env](#preparation-for-poetry-env)
-    - [Execution](#execution)
       - [Token Mapping](#token-mapping)
       - [Dataset Creation](#sataset-creation)
+    - [Train](#train)
   - [Description of each directory](#description-of-each-directory)
   - [Code Quality Management](#code-quality-management)
     - [Linter and Formatter](#linter-and-formatter)
@@ -25,8 +27,6 @@
 # install dependencies
 $ make init
 ```
-
-### Execution
 #### Token Mapping
 1. Modify the values assigned to variables in [config file](generative_music/domain/midi_data_processor/midi_representation/config.py) as needed.
    > Note: be aware that this may cause test code to fail, so adjust accordingly
@@ -45,18 +45,38 @@ $ make token-mapping
 $ make dataset
 ```
 
+### Train
+1. Modify the values assigned to variables in [config files](generative_music/config) as needed.
+2. Execute the following command.
+``` bash
+# start training based on config setting
+$ make train
+```
+
 ## Description of each directory
 ```
 repository TOP
 │
 ├ generative_music .. Package containing the main features of this module
+│  ├ config .. Configuration yaml files used during training
+│  │
+│  ├ data .. Storage for pre-acquired MIDI data and data written out for training and test
+│  │
 │  ├ domain .. Package for granular parts that do not depend on other features
 │  │  ├ dataset_preparation .. Preparing and splitting the dataset
-│  │  └ midi_data_processor .. Functions and settings for handling MIDI data
-│  │    ├ midi_representation .. Settings for handling MIDI for training purposes
-│  │    ├ midi_tokenization .. Mapping of MIDI event information to token IDs
-│  │    ├ postprocessing .. Writing event information to MIDI
-│  │    └ preprocessing .. Converting MIDI files to token IDs
+│  │  │ └ batch_generation .. Preparing and processing datasets to be used in training
+│  │  │
+│  │  ├ midi_data_processor .. Functions and settings for handling MIDI data
+│  │  │ ├ midi_representation .. Settings for handling MIDI for training purposes
+│  │  │ ├ midi_tokenization .. Mapping of MIDI event information to token IDs
+│  │  │ ├ postprocessor .. Writing event information to MIDI
+│  │  │ └ preprocessor .. Converting MIDI files to token IDs
+│  │  │
+│  │  ├ model .. Model architecture
+│  │  │ ├ transformer .. Transformer model
+│  │  │ └ utils .. Neural network model utilities
+│  │  │
+│  │  └ train .. learning rate scheduler, loss function, training step and loading train data
 │  │
 │  ├ service .. Combining granular parts and bundling them for specific purposes
 │  │
