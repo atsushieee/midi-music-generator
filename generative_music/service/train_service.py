@@ -18,6 +18,7 @@ from generative_music.domain.model.transformer import Decoder
 from generative_music.domain.train import (
     LabelSmoothedCategoricalCrossentropy, TrainDataLoader, TrainStep,
     WarmupCosineDecayScheduler)
+from generative_music.infrastructure.model_storage import CheckpointManager
 
 
 class TrainService:
@@ -35,6 +36,7 @@ class TrainService:
         optimizer: tf.keras.optimizers.Optimizer,
         data_loader: TrainDataLoader,
         epochs: int,
+        checkpoint_dir: str,
     ):
         """Initialize the TrainService instance.
 
@@ -46,6 +48,8 @@ class TrainService:
             data_loader (TrainDataLoader):
                 The DataLoader instance for loading training and validation data.
             epochs (int): The number of epochs for training the model.
+            checkpoint_dir (str):
+                The directory where the checkpoints will be saved.
         """
         self.train_step = TrainStep(model, loss, optimizer)
         self.model = model
@@ -53,6 +57,8 @@ class TrainService:
         self.train_data = data_loader.load_train_data()
         self.val_data = data_loader.load_val_data()
         self.epochs = epochs
+        self.checkpoint_manager = CheckpointManager(model, optimizer, checkpoint_dir)
+        self.start_epoch = self.checkpoint_manager.get_epoch()
 
     def train(self):
         """Train and validate the model for a certain number of epochs.
@@ -60,13 +66,15 @@ class TrainService:
         For each epoch, the model is trained using the training data,
         and then validated using the validation data.
         The average loss value for each epoch is printed.
+        After each epoch, the model's state is saved as a checkpoint.
         """
-        for epoch in range(self.epochs):
+        for epoch in range(self.start_epoch, self.epochs):
             print(f"Epoch {epoch + 1}/{self.epochs}")
             train_loss = self._run_epoch(self.train_data, is_training=True)
             print(f"  - train loss: {train_loss:.4f}")
             val_loss = self._run_epoch(self.val_data)
             print(f"  - valid loss: {val_loss:.4f}")
+            self.checkpoint_manager.save(epoch + 1)
 
     def _run_epoch(self, data, is_training=False) -> float:
         """Run one epoch of training or validation.
@@ -150,6 +158,7 @@ if __name__ == "__main__":
     tfrecords_dir = Path(cfg_dataset["paths"]["tfrecords_dir"])
     train_basename = cfg_dataset["dataset_basenames"]["train"]
     val_basename = cfg_dataset["dataset_basenames"]["val"]
+    ckpt_dir = cfg_dataset["paths"]["ckpt_dir"]
 
     # Load the JSON file
     json_data = load_json("generative_music/data/event2id.json")
@@ -178,6 +187,6 @@ if __name__ == "__main__":
         val_basename,
     )
     train_service = TrainService(
-        transformer_decoder, loss, optimizer, data_loader, epochs
+        transformer_decoder, loss, optimizer, data_loader, epochs, ckpt_dir
     )
     train_service.train()
