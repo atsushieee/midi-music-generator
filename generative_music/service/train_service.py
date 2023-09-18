@@ -16,8 +16,8 @@ from tqdm import tqdm
 
 from generative_music.domain.model.transformer import Decoder
 from generative_music.domain.train import (
-    LabelSmoothedCategoricalCrossentropy, TrainDataLoader, TrainStep,
-    WarmupCosineDecayScheduler)
+    EpochStepsCalculator, LabelSmoothedCategoricalCrossentropy,
+    TrainDataLoader, TrainStep, WarmupCosineDecayScheduler)
 from generative_music.infrastructure.model_storage import CheckpointManager
 
 
@@ -37,6 +37,7 @@ class TrainService:
         data_loader: TrainDataLoader,
         epochs: int,
         checkpoint_dir: str,
+        epoch_steps_calculator: EpochStepsCalculator,
     ):
         """Initialize the TrainService instance.
 
@@ -50,6 +51,9 @@ class TrainService:
             epochs (int): The number of epochs for training the model.
             checkpoint_dir (str):
                 The directory where the checkpoints will be saved.
+            epoch_steps_calculator (EpochStepsCalculator):
+                The instance used to calculate the total steps
+                needed for each epoch of training and validation.
         """
         self.train_step = TrainStep(model, loss, optimizer)
         self.model = model
@@ -59,6 +63,8 @@ class TrainService:
         self.epochs = epochs
         self.checkpoint_manager = CheckpointManager(model, optimizer, checkpoint_dir)
         self.start_epoch = self.checkpoint_manager.get_epoch()
+        self.train_total_steps = epoch_steps_calculator.train_total_steps
+        self.val_total_steps = epoch_steps_calculator.val_total_steps
 
     def train(self):
         """Train and validate the model for a certain number of epochs.
@@ -90,7 +96,10 @@ class TrainService:
         total_loss = tf.constant(0.0)
         total_steps = 0
         progress_bar = tqdm(
-            data, desc="Training" if is_training else "Validation", dynamic_ncols=True
+            data,
+            total=self.train_total_steps if is_training else self.val_total_steps,
+            desc="Training" if is_training else "Validation",
+            dynamic_ncols=True,
         )
         for x_batch, y_batch, mask in progress_bar:
             if is_training:
@@ -159,6 +168,12 @@ if __name__ == "__main__":
     train_basename = cfg_dataset["dataset_basenames"]["train"]
     val_basename = cfg_dataset["dataset_basenames"]["val"]
     ckpt_dir = cfg_dataset["paths"]["ckpt_dir"]
+    midi_data_dir = Path(cfg_dataset["paths"]["midi_data_dir"])
+    train_ratio = cfg_dataset["ratios"]["train_ratio"]
+    val_ratio = cfg_dataset["ratios"]["val_ratio"]
+    epoch_steps_calculator = EpochStepsCalculator(
+        midi_data_dir, train_ratio, val_ratio, batch_size
+    )
 
     # Load the JSON file
     json_data = load_json("generative_music/data/event2id.json")
@@ -187,6 +202,12 @@ if __name__ == "__main__":
         val_basename,
     )
     train_service = TrainService(
-        transformer_decoder, loss, optimizer, data_loader, epochs, ckpt_dir
+        transformer_decoder,
+        loss,
+        optimizer,
+        data_loader,
+        epochs,
+        ckpt_dir,
+        epoch_steps_calculator,
     )
     train_service.train()

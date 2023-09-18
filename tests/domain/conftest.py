@@ -1,4 +1,6 @@
 """The common Functions Module."""
+from pathlib import Path
+
 import pytest
 from miditoolkit.midi import parser as midi_parser
 
@@ -28,3 +30,27 @@ def create_sample_midi() -> midi_parser.MidiFile:
         midi_parser.Note(60, 61, 1675, 1915),
     ]
     return midi_obj
+
+
+@pytest.fixture
+def create_temp_midi_files(
+    create_sample_midi: midi_parser.MidiFile, tmp_path: Path
+) -> Path:
+    """Create temporary MIDI files for testing.
+
+    Args:
+        create_sample_midi (midi_parser.MidiFile):
+            A sample MIDI file object used for creating the temporary files.
+        tmp_path (Path):
+            The temporary directory path provided by pytest
+            where the MIDI files will be created.
+
+    Returns:
+        Path: The path to the directory containing the temporary MIDI files.
+    """
+    num_files = 10
+    for i in range(num_files):
+        midi_obj = create_sample_midi
+        filepath = tmp_path / f"tmp_{i:03}.mid"
+        midi_obj.dump(str(filepath))
+    return tmp_path
