@@ -52,6 +52,14 @@ $ make dataset
 # start training based on config setting
 $ make train
 ```
+#### Resume Training
+If you want to resume training from a certain checkpoint, you can specify the resumed_dir as follows:
+```  bash
+# resume training from a specific directory
+$ make train resumed_dir=<path_to_your_directory>
+```
+Please replace <path_to_your_directory> with the actual path to the directory
+where your training checkpoint is located.
 
 ## Description of each directory
 ```

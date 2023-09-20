@@ -31,4 +31,8 @@ dataset:
 
 .PHONY: train
 train:
+ifeq ($(resumed_dir),)
 	poetry run python generative_music/service/train_service.py --model_env test
+else
+	poetry run python generative_music/service/train_service.py --model_env test --resumed_dir $(resumed_dir)
+endif

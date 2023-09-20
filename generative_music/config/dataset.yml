@@ -4,6 +4,7 @@ paths:
   midi_data_dir: generative_music/data/midis
   csv_filepath: generative_music/data/dataset.csv
   ckpt_dir: generative_music/data/ckpt
+  tensorboard_dir: generative_music/data/tensorboard
 dataset_basenames:
   train: train
   val: validation

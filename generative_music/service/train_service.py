@@ -7,6 +7,7 @@ It is designed to be flexible and easy to use for a variety of different models.
 """
 import argparse
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
@@ -19,6 +20,7 @@ from generative_music.domain.train import (
     EpochStepsCalculator, LabelSmoothedCategoricalCrossentropy,
     TrainDataLoader, TrainStep, WarmupCosineDecayScheduler)
 from generative_music.infrastructure.model_storage import CheckpointManager
+from generative_music.infrastructure.tensorboard import TensorboardWriter
 
 
 class TrainService:
@@ -38,6 +40,7 @@ class TrainService:
         epochs: int,
         checkpoint_dir: str,
         epoch_steps_calculator: EpochStepsCalculator,
+        tensorboard_writer: TensorboardWriter,
     ):
         """Initialize the TrainService instance.
 
@@ -54,10 +57,14 @@ class TrainService:
             epoch_steps_calculator (EpochStepsCalculator):
                 The instance used to calculate the total steps
                 needed for each epoch of training and validation.
+            tensorboard_writer (TensorboardWriter):
+                The TensorboardWriter instance for writing scalar values
+                and hyperparameters to TensorBoard logs.
         """
         self.train_step = TrainStep(model, loss, optimizer)
         self.model = model
         self.loss = loss
+        self.optimizer = optimizer
         self.train_data = data_loader.load_train_data()
         self.val_data = data_loader.load_val_data()
         self.epochs = epochs
@@ -65,6 +72,7 @@ class TrainService:
         self.start_epoch = self.checkpoint_manager.get_epoch()
         self.train_total_steps = epoch_steps_calculator.train_total_steps
         self.val_total_steps = epoch_steps_calculator.val_total_steps
+        self.tensorboard_writer = tensorboard_writer
 
     def train(self):
         """Train and validate the model for a certain number of epochs.
@@ -76,13 +84,13 @@ class TrainService:
         """
         for epoch in range(self.start_epoch, self.epochs):
             print(f"Epoch {epoch + 1}/{self.epochs}")
-            train_loss = self._run_epoch(self.train_data, is_training=True)
+            train_loss = self._run_epoch(self.train_data, epoch + 1, is_training=True)
             print(f"  - train loss: {train_loss:.4f}")
-            val_loss = self._run_epoch(self.val_data)
+            val_loss = self._run_epoch(self.val_data, epoch + 1)
             print(f"  - valid loss: {val_loss:.4f}")
             self.checkpoint_manager.save(epoch + 1)
 
-    def _run_epoch(self, data, is_training=False) -> float:
+    def _run_epoch(self, data, epoch: int, is_training=False) -> float:
         """Run one epoch of training or validation.
 
         Args:
@@ -104,6 +112,13 @@ class TrainService:
         for x_batch, y_batch, mask in progress_bar:
             if is_training:
                 loss_value = self.train_step(x_batch, y_batch, mask)
+                # The numpy() method is used to convert the scalar tensor value
+                # to a standard Python numeric type.
+                step_num = self.optimizer.iterations.numpy()
+                current_lr = self.optimizer.learning_rate(step_num)
+                self.tensorboard_writer.write_scalar(
+                    "learning_rate", current_lr, step_num
+                )
             else:
                 y_pred = self.model(x_batch)
                 loss_value = self.loss(y_batch, y_pred)
@@ -113,6 +128,8 @@ class TrainService:
                 {"loss": total_loss.numpy() / total_steps}, refresh=True
             )
         progress_bar.close()
+        loss_name = "train/loss" if is_training else "val/loss"
+        self.tensorboard_writer.write_scalar(loss_name, total_loss / total_steps, epoch)
         return total_loss / total_steps
 
 
@@ -148,6 +165,7 @@ if __name__ == "__main__":
     # Set the hyper parameter
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_env", type=str, default="test")
+    parser.add_argument("--resumed_dir", type=str)
     args = parser.parse_args()
 
     # Load the model config file
@@ -167,13 +185,25 @@ if __name__ == "__main__":
     tfrecords_dir = Path(cfg_dataset["paths"]["tfrecords_dir"])
     train_basename = cfg_dataset["dataset_basenames"]["train"]
     val_basename = cfg_dataset["dataset_basenames"]["val"]
-    ckpt_dir = cfg_dataset["paths"]["ckpt_dir"]
+    ckpt_base_dir = cfg_dataset["paths"]["ckpt_dir"]
+    tensorboard_base_dir = cfg_dataset["paths"]["tensorboard_dir"]
     midi_data_dir = Path(cfg_dataset["paths"]["midi_data_dir"])
     train_ratio = cfg_dataset["ratios"]["train_ratio"]
     val_ratio = cfg_dataset["ratios"]["val_ratio"]
     epoch_steps_calculator = EpochStepsCalculator(
         midi_data_dir, train_ratio, val_ratio, batch_size
     )
+
+    # Tensorboard initialization
+    # Setting for new training
+    current_time = datetime.now().strftime("%y%m%d%H%M")
+    tensorboard_dir = f"{tensorboard_base_dir}/{current_time}_{args.model_env}"
+    ckpt_dir = f"{ckpt_base_dir}/{current_time}_{args.model_env}"
+    # If resuming training from a previous state, update tensorboard and ckpt directory.
+    if args.resumed_dir:
+        tensorboard_dir = f"{tensorboard_base_dir}/{args.resumed_dir}"
+        ckpt_dir = f"{ckpt_base_dir}/{args.resumed_dir}"
+    tensorboard_writer = TensorboardWriter(tensorboard_dir, hyperparameters=cfg_model)
 
     # Load the JSON file
     json_data = load_json("generative_music/data/event2id.json")
@@ -189,7 +219,8 @@ if __name__ == "__main__":
         masked_id=vocab_size, vocab_size=vocab_size
     )
     # Instantiate the optimizer with a custom learning rate scheduler
-    lr_scheduler = WarmupCosineDecayScheduler()
+    train_total_steps = epoch_steps_calculator.train_total_steps * epochs
+    lr_scheduler = WarmupCosineDecayScheduler(total_steps=train_total_steps)
     optimizer = tf.keras.optimizers.Adam(learning_rate=lr_scheduler)
     data_loader = TrainDataLoader(
         batch_size,
@@ -209,5 +240,6 @@ if __name__ == "__main__":
         epochs,
         ckpt_dir,
         epoch_steps_calculator,
+        tensorboard_writer,
     )
     train_service.train()
