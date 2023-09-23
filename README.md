@@ -19,11 +19,11 @@
 
 ## Getting Started
 
-* Environment Requirements: **python 3.11.1, poetry 1.2.2**
+* Environment Requirements: **python 3.9, poetry 1.2.2**
 
 ### Prerequisites
 #### Preparation for poetry env
-``` bash
+```bash
 # install dependencies
 $ make init
 ```
@@ -31,7 +31,7 @@ $ make init
 1. Modify the values assigned to variables in [config file](generative_music/domain/midi_data_processor/midi_representation/config.py) as needed.
    > Note: be aware that this may cause test code to fail, so adjust accordingly
 2. Execute the following command.
-``` bash
+```bash
 # create id2event and event2id json files
 $ make token-mapping
 ```
@@ -40,7 +40,7 @@ $ make token-mapping
 2. Move the train directory located inside the downloaded data directory to `generative_music/data`.
 3. Rename the folder from `train` to `midis`.
 4. Execute the following command.
-``` bash
+```bash
 # # Create the CSV file the TensorFlow records for dataset split (train/val/test)
 $ make dataset
 ```
@@ -48,18 +48,49 @@ $ make dataset
 ### Train
 1. Modify the values assigned to variables in [config files](generative_music/config) as needed.
 2. Execute the following command.
-``` bash
+```bash
 # start training based on config setting
-$ make train
+# If you want to specify the model environment, pass it as an argument like `model_env=gpt-2`.
+# If not specified, `test` will be used by default.
+$ make train model_env=[your_model_environment]
 ```
 #### Resume Training
-If you want to resume training from a certain checkpoint, you can specify the resumed_dir as follows:
-```  bash
+If you want to resume training from a certain checkpoint,
+you can specify the directory containing the checkpoint files as follows:
+```bash
 # resume training from a specific directory
-$ make train resumed_dir=<path_to_your_directory>
+$ make train resumed_dir=<directory_containing_your_checkpoint_files>
 ```
-Please replace <path_to_your_directory> with the actual path to the directory
-where your training checkpoint is located.
+Please replace `<directory_containing_your_checkpoint_files>`
+with the actual directory containing the checkpoint files.
+The default path for the checkpoint directory is specified
+in the [dataset.yml](generative_music/config/dataset.yml) file under the ckpt_dir key.
+
+#### Monitor Training Progress with TensorBoard
+You can monitor the progress of your training using TensorBoard.
+
+This allows you to track changes in loss, learning rate, and various hyperparameters.
+To start TensorBoard, execute the following command:
+
+```bash
+# Start TensorBoard
+$ make tensorboard log_dir_name=<directory_containing_your_tensorboard_files>
+```
+Please replace `<directory_containing_your_tensorboard_files>`
+with the actual tensorboard directory where your training logs are located.
+[This](generative_music/data/tensorboard) is the initial setting path for the tensorboard directory.
+If you have changed the save location for TensorBoard during training,
+please specify the new directory using the `log_path` argument.
+
+With TensorBoard, you can visualize different aspects of your model, such as:
+- Training / validation losses
+- Learning rate per step
+- Hyperparameters such as:
+  - Transformer decoder settings
+  - Max sequence length
+  - The number of epochs
+
+This can be useful for tuning your model and improving its performance.
 
 ## Description of each directory
 ```
@@ -89,6 +120,8 @@ repository TOP
 │  ├ service .. Combining granular parts and bundling them for specific purposes
 │  │
 │  └ infrastructure .. Handling external resources and data storage
+│     ├ model_storage .. Storing model checkpoints and SavedModels
+│     ├ tensorboard .. Storing data necessary for visualization with TensorBoard
 │     └ tfrecords .. Writing and reading TensorFlow record files
 │
 └ tests .. Test package. The hierarchical structure below follows the main module
@@ -98,13 +131,13 @@ repository TOP
 
 ### Code Quality Management
 #### Linter and Formatter
-``` bash
+```bash
 $ make lint
 $ make format
 ```
 #### Test
 1. Implement [this](#token-mapping) only for the first time.
 2. Execute the following command.
-``` bash
+```bash
 $ make test
 ```

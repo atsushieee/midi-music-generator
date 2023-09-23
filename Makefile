@@ -30,9 +30,15 @@ dataset:
 	poetry run python generative_music/service/dataset_service.py
 
 .PHONY: train
+model_env ?= test
 train:
 ifeq ($(resumed_dir),)
-	poetry run python generative_music/service/train_service.py --model_env test
+	poetry run python generative_music/service/train_service.py --model_env $(model_env)
 else
-	poetry run python generative_music/service/train_service.py --model_env test --resumed_dir $(resumed_dir)
+	poetry run python generative_music/service/train_service.py --model_env $(model_env) --resumed_dir $(resumed_dir)
 endif
+
+.PHONY: tensorboard
+log_path ?= generative_music/data/tensorboard
+tensorboard:
+	poetry run tensorboard --logdir $(log_path)/$(log_dir_name)
