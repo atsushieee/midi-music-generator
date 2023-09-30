@@ -38,7 +38,11 @@ class TrainStep:
         self.optimizer = optimizer
 
     def __call__(
-        self, x_batch: tf.Tensor, y_batch: tf.Tensor, mask: Optional[tf.Tensor] = None
+        self,
+        x_batch: tf.Tensor,
+        y_batch: tf.Tensor,
+        mask: Optional[tf.Tensor] = None,
+        training: Optional[bool] = None,
     ) -> tf.Tensor:
         """Compute the loss and apply gradients for the given batch.
 
@@ -53,12 +57,14 @@ class TrainStep:
                 and is used for broadcasting with the attention logits tensor.
                 If provided, the part of attention scores will be masked.
                 Defaults to None.
+            training (Optional[bool], optional):
+                If the layer is being called during training.Defaults to None.
 
         Returns:
             tf.Tensor: The computed loss for the given batch.
         """
         with tf.GradientTape() as tape:
-            y_pred = self.model(x_batch, mask)
+            y_pred = self.model(x_batch, mask, training)
             loss_value = self.loss(y_batch, y_pred)
         grads = tape.gradient(loss_value, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))

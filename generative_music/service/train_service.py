@@ -111,7 +111,7 @@ class TrainService:
         )
         for x_batch, y_batch, mask in progress_bar:
             if is_training:
-                loss_value = self.train_step(x_batch, y_batch, mask)
+                loss_value = self.train_step(x_batch, y_batch, mask, is_training)
                 # The numpy() method is used to convert the scalar tensor value
                 # to a standard Python numeric type.
                 step_num = self.optimizer.iterations.numpy()
@@ -220,7 +220,9 @@ if __name__ == "__main__":
     )
     # Instantiate the optimizer with a custom learning rate scheduler
     train_total_steps = epoch_steps_calculator.train_total_steps * epochs
-    lr_scheduler = WarmupCosineDecayScheduler(total_steps=train_total_steps)
+    lr_scheduler = WarmupCosineDecayScheduler(
+        warmup_steps=8000, total_steps=train_total_steps
+    )
     optimizer = tf.keras.optimizers.Adam(learning_rate=lr_scheduler)
     data_loader = TrainDataLoader(
         batch_size,

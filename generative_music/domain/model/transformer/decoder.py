@@ -62,7 +62,12 @@ class Decoder(tf.keras.Model):
         ]
         self.generator_layer = Generator(vocab_size)
 
-    def call(self, x: tf.Tensor, mask: Optional[tf.Tensor] = None) -> tf.Tensor:
+    def call(
+        self,
+        x: tf.Tensor,
+        mask: Optional[tf.Tensor] = None,
+        training: Optional[bool] = None,
+    ) -> tf.Tensor:
         """Compute the decoder block for the input tensor.
 
         The input tensor is passed through the input embedding layer,
@@ -77,15 +82,17 @@ class Decoder(tf.keras.Model):
                 and is used for broadcasting with the attention logits tensor.
                 If provided, the part of attention scores will be masked.
                 Defaults to None.
+            training (Optional[bool], optional):
+                If the layer is being called during training.Defaults to None.
 
         Returns:
             tf.Tensor:
                 The output tensor with shape (batch_size, seq_len, vocab_size)
                 after applying the input embedding layer, decoder layers and generator layer.
         """
-        x = self.input_embedding_layer(x)
+        x = self.input_embedding_layer(x, training)
         for decoder_layer in self.decoder_layers:
-            x = decoder_layer(x, mask)
+            x = decoder_layer(x, mask, training)
         output = self.generator_layer(x)
 
         return output

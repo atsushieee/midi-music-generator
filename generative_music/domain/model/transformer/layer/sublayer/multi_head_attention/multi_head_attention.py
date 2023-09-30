@@ -89,6 +89,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         key: tf.Tensor,
         value: tf.Tensor,
         mask: Optional[tf.Tensor] = None,
+        training: Optional[bool] = None,
     ) -> tf.Tensor:
         """Compute multi-head attention for the given query, key, and value tensors.
 
@@ -117,6 +118,8 @@ class MultiHeadAttention(tf.keras.layers.Layer):
                 and is used for broadcasting with the attention logits tensor.
                 If provided, the part of attention scores will be masked.
                 Defaults to None.
+            training (Optional[bool], optional):
+                If the layer is being called during training.Defaults to None.
 
         Returns:
             tf.Tensor:
@@ -132,7 +135,9 @@ class MultiHeadAttention(tf.keras.layers.Layer):
             self.split_heads(x, batch_size) for x in (query, key, value)
         ]
 
-        scaled_attention, attention_weights = self.attention(query, key, value, mask)
+        scaled_attention, attention_weights = self.attention(
+            query, key, value, mask, training
+        )
 
         scaled_attention = tf.transpose(scaled_attention, perm=[0, 2, 1, 3])
         concat_attention = tf.reshape(

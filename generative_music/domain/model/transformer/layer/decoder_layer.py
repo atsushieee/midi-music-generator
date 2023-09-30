@@ -58,7 +58,12 @@ class DecoderLayer(tf.keras.layers.Layer):
         self.mha_add_and_norm_layer = AddAndNorm(epsilon, dropout_rate)
         self.ffn_add_and_norm_layer = AddAndNorm(epsilon, dropout_rate)
 
-    def call(self, x: tf.Tensor, mask: Optional[tf.Tensor] = None):
+    def call(
+        self,
+        x: tf.Tensor,
+        mask: Optional[tf.Tensor] = None,
+        training: Optional[bool] = None,
+    ):
         """Process the input tensor through the decoder layer.
 
         Args:
@@ -74,6 +79,8 @@ class DecoderLayer(tf.keras.layers.Layer):
                 and is used for broadcasting with the attention logits tensor.
                 If provided, the part of attention scores will be masked.
                 Defaults to None.
+            training (Optional[bool], optional):
+                If the layer is being called during training.Defaults to None.
 
         Returns:
             tf.Tensor:
@@ -81,10 +88,10 @@ class DecoderLayer(tf.keras.layers.Layer):
                 after processing through the decoder layer.
         """
         # Apply multi-head attention
-        mha_output = self.multi_head_attention_layer(x, x, x, mask)
-        mha_aan_out = self.mha_add_and_norm_layer(x, mha_output)
+        mha_output = self.multi_head_attention_layer(x, x, x, mask, training)
+        mha_aan_out = self.mha_add_and_norm_layer(x, mha_output, training)
         # Apply position-wise feed forward network
-        ffn_output = self.ff_network_layer(mha_aan_out)
-        final_output = self.ffn_add_and_norm_layer(mha_aan_out, ffn_output)
+        ffn_output = self.ff_network_layer(mha_aan_out, training)
+        final_output = self.ffn_add_and_norm_layer(mha_aan_out, ffn_output, training)
 
         return final_output

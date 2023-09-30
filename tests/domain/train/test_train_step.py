@@ -50,7 +50,7 @@ class TestTrainStep:
             result = train_step(mock_x_batch, mock_y_batch, mock_mask)
 
         # Verify the calls
-        mock_model.assert_called_once_with(mock_x_batch, mock_mask)
+        mock_model.assert_called_once_with(mock_x_batch, mock_mask, None)
         mock_loss.assert_called_once_with(mock_y_batch, mock_y_pred)
         assert result == mock_loss_value
 
