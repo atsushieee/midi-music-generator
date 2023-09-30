@@ -85,3 +85,33 @@ class TestCheckpointManager:
         # (i.e., weight matrix and bias vector) to ensure they're all close.
         for w_before, w_after in zip(weights_before, weights_after):
             np.testing.assert_allclose(w_before, w_after, rtol=1e-6, atol=1e-6)
+
+    def test_restore_from_checkpoint(self):
+        """Test if the model state is correctly restored from a specific checkpoint.
+
+        First, change the model weights and save them using CheckpointManager.
+        Then, change the model weights again and save them as a new checkpoint.
+        Finally, restore the model state from the first checkpoint
+        and verify if the weights match.
+        The test is performed for each set of weights in the model.
+        """
+        # Change model weights and then save as the first checkpoint
+        self.model.layers[0].weights[0].assign_add(
+            tf.random.normal(shape=self.model.layers[0].weights[0].shape)
+        )
+        weights_before = self.model.get_weights()
+        checkpoint_number = 1
+        self.manager.save(epoch=checkpoint_number)
+        # Change model weights again and then save as the second checkpoint
+        self.model.layers[0].weights[0].assign_add(
+            tf.random.normal(shape=self.model.layers[0].weights[0].shape)
+        )
+        self.manager.save(epoch=checkpoint_number + 1)
+        # Restore the model state from the first checkpoint
+        # Create and restore a new manager
+        new_manager = CheckpointManager(self.model, self.optimizer, self.checkpoint_dir)
+        new_manager.restore_from_checkpoint(checkpoint_number)
+        weights_after = self.model.get_weights()
+        # Verify weights are restored correctly from the first checkpoint
+        for w_before, w_after in zip(weights_before, weights_after):
+            np.testing.assert_allclose(w_before, w_after, rtol=1e-6, atol=1e-6)

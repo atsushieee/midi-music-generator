@@ -25,6 +25,7 @@ class CheckpointManager:
         model: tf.keras.Model,
         optimizer: tf.keras.optimizers.Optimizer,
         checkpoint_dir: str,
+        checkpoint_name: str = "ckpt",
     ):
         """Initialize the CheckpointManager class.
 
@@ -35,10 +36,13 @@ class CheckpointManager:
                 The optimizer to be used for training the model.
             checkpoint_dir (str):
                 The directory where the checkpoints will be saved.
+            checkpoint_name (str):
+                The name to be used for the checkpoints. Defaults to "ckpt".
         """
         self.model = model
         self.optimizer = optimizer
         self.checkpoint_dir = checkpoint_dir
+        self.checkpoint_name = checkpoint_name
         # Check if the directory exists, if not, create it
         if not os.path.exists(self.checkpoint_dir):
             os.makedirs(self.checkpoint_dir)
@@ -57,9 +61,26 @@ class CheckpointManager:
         """
         self.checkpoint.epoch.assign(epoch)
         save_path = self.checkpoint.save(
-            file_prefix=os.path.join(self.checkpoint_dir, "ckpt")
+            file_prefix=os.path.join(self.checkpoint_dir, self.checkpoint_name)
         )
         print(f"Saved checkpoint to {save_path}")
+
+    def restore_from_checkpoint(self, checkpoint_number: int):
+        """Restore the model from a specific checkpoint.
+
+        Args:
+            checkpoint_number (int): The number of the checkpoint to restore.
+        """
+        checkpoint_path = os.path.join(
+            self.checkpoint_dir, f"{self.checkpoint_name}-{checkpoint_number}"
+        )
+
+        if checkpoint_path:
+            print(checkpoint_path)
+            self.checkpoint.restore(checkpoint_path)
+            print(f"Restored model from {checkpoint_path}")
+        else:
+            print(f"No checkpoint found at {checkpoint_path}. Please check the path.")
 
     def get_epoch(self):
         """Get the current epoch number.
