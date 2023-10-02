@@ -77,3 +77,18 @@ class TestEvent:
         """
         with pytest.raises(ValueError):
             Event(name="InvalidName", time=0, value=None)
+
+    def test_convert_value(self):
+        """Check if the function correctly converts the input value to the appropriate type.
+
+        This test checks if None or "None" is correctly converted to None,
+        if an integer or a string representation of an integer is correctly converted to integer,
+        and if any other string is returned as is.
+        """
+        event = Event(name=EventName.TEMPO_CLASS, time=1920, value="mid")
+
+        assert event._convert_value(None) is None
+        assert event._convert_value("None") is None
+        assert event._convert_value("5") == 5
+        assert event._convert_value(5) == 5
+        assert event._convert_value("some string") == "some string"

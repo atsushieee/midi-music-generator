@@ -107,7 +107,26 @@ class Event:
             raise ValueError("Invalid name. Allowed values are enum items.")
         self.name = name
         self.time = time
-        self.value = value
+        self.value = self._convert_value(value)
+
+    def _convert_value(
+        self, value: Optional[Union[int, str]]
+    ) -> Optional[Union[int, str]]:
+        """Convert the value to the appropriate type.
+
+        Args:
+            value (Optional[Union[int, str]]): The value to be converted.
+
+        Returns:
+            Optional[Union[int, str]]: The converted value.
+        """
+        if value is None or value == "None":
+            return None
+        if isinstance(value, int):
+            return value
+        if value.isdigit():
+            return int(value)
+        return value
 
     def __repr__(self) -> str:
         """Return a string representation of the Event instance.

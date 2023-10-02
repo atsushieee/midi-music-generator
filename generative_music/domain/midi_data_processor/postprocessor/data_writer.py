@@ -81,6 +81,10 @@ class DataWriter:
         notes: List[Tuple[int, int, int, int]] = []
         chords: List[Tuple[int, str]] = []
         tempos: List[Tuple[int, int]] = []
+        # We loop until len(events) - 3 because we are checking for a sequence of 4 events
+        # at a time (POSITION, NOTE_VELOCITY, NOTE_ON, NOTE_DURATION).
+        # If the last event sequence is a chord,it will not form a complete sequence of 4 events
+        # but we don't need to consider it for forming notes.
         for i in range(len(events) - 3):
             time = events[i].time
             if (
