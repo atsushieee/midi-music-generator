@@ -126,6 +126,9 @@ class DataWriter:
                         )
                         tempos.append((time, tempo))
                         break
+        print(notes)
+        print(chords)
+        print(tempos)
         return notes, chords, tempos
 
     def _get_specific_time_for_notes(
