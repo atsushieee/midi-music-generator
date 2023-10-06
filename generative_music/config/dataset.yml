@@ -3,8 +3,12 @@ paths:
   tfrecords_dir: generative_music/data/tfrecords
   midi_data_dir: generative_music/data/midis
   csv_filepath: generative_music/data/dataset.csv
-  ckpt_dir: generative_music/data/ckpt
+  ckpt:
+    base_dir: generative_music/data/ckpt
+    dir_name: 2309301756_test
+    number: 19
   tensorboard_dir: generative_music/data/tensorboard
+  result_data_dir: generative_music/data/outputs
 dataset_basenames:
   train: train
   val: validation

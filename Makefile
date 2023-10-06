@@ -42,3 +42,17 @@ endif
 log_path ?= generative_music/data/tensorboard
 tensorboard:
 	poetry run tensorboard --logdir $(log_path)/$(log_dir_name)
+
+.PHONY: inference
+model_env ?= test
+n_target_bar ?= 2
+max_length ?= 512
+temperature ?= 1.2
+topk ?= 5
+inference:
+	poetry run python generative_music/service/inference_service.py \
+  	--model_env $(model_env) \
+  	--n_target_bar $(n_target_bar) \
+	--max_length $(max_length) \
+	--temperature $(temperature) \
+	--topk $(topk)

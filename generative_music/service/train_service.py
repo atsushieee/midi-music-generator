@@ -185,7 +185,7 @@ if __name__ == "__main__":
     tfrecords_dir = Path(cfg_dataset["paths"]["tfrecords_dir"])
     train_basename = cfg_dataset["dataset_basenames"]["train"]
     val_basename = cfg_dataset["dataset_basenames"]["val"]
-    ckpt_base_dir = cfg_dataset["paths"]["ckpt_dir"]
+    ckpt_base_dir = cfg_dataset["paths"]["ckpt"]["base_dir"]
     tensorboard_base_dir = cfg_dataset["paths"]["tensorboard_dir"]
     midi_data_dir = Path(cfg_dataset["paths"]["midi_data_dir"])
     train_ratio = cfg_dataset["ratios"]["train_ratio"]

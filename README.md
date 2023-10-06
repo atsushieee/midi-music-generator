@@ -41,7 +41,7 @@ $ make token-mapping
 3. Rename the folder from `train` to `midis`.
 4. Execute the following command.
 ```bash
-# # Create the CSV file the TensorFlow records for dataset split (train/val/test)
+# create the CSV file the TensorFlow records for dataset split (train/val/test)
 $ make dataset
 ```
 
@@ -91,6 +91,28 @@ With TensorBoard, you can visualize different aspects of your model, such as:
   - The number of epochs
 
 This can be useful for tuning your model and improving its performance.
+
+### Inference
+1. Modify the values assigned to variables in [config files](generative_music/config) as needed.
+2. Execute the following command.
+```bash
+# Run inference with default parameters
+$ make inference
+```
+This command will work with the default parameter settings. The default values are as follows:
+- `model_env`: The environment of the model. The default is `test`.
+- `n_target_bar`: The number of bars to target. The default is `2`.
+- `max_length`: The maximum length. The default is `512`.
+- `temperature`: The temperature parameter. The default is `1.2`.
+- `topk`: The value of k in top-k sampling. The default is `5`.
+
+Each parameter can be changed as needed.
+For example, if you want to set `n_target_bar` to `4` and `max_length` to `1024`, you can run the command as follows:
+```bash
+# Run inference with custom parameters (n_target_bar=4, max_length=1024)
+$ make inference n_target_bar=4 max_length=1024
+```
+This allows you to freely adjust the output results.
 
 ## Description of each directory
 ```
