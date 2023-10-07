@@ -1,7 +1,6 @@
 """A module for splitting a dataset into train, validation and test sets."""
 import csv
 import random
-from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List
 
@@ -75,7 +74,11 @@ class DatasetSplitter:
         val_ratio = self.val_ratio / total_ratio
         num_train_files = int(num_total_files * train_ratio)
         num_val_files = int(num_total_files * val_ratio)
-        split_data = defaultdict(list)
+        split_data: Dict[str, List] = {
+            self.train_basename: [],
+            self.val_basename: [],
+            self.test_basename: [],
+        }
         for i, file in enumerate(self.file_list):
             if i < num_train_files:
                 split_data[self.train_basename].append(str(file))

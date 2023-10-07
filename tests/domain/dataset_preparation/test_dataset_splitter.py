@@ -127,7 +127,7 @@ class TestDatasetSplitter:
         and the consistency between the input ratios and the actual split ratios.
         """
         split_data = self.splitter.split_data()
-        assert isinstance(split_data, defaultdict)
+        assert isinstance(split_data, dict)
         assert set(split_data.keys()) == {"train", "validation", "test"}
         assert sum(len(files) for files in split_data.values()) == self.num_files
         assert len(split_data["train"]) == int(self.num_files * self.train_ratio)
