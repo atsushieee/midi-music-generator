@@ -17,3 +17,6 @@ ratios:
   train_ratio: 0.8
   val_ratio: 0.2
   test_ratio: 0.0
+data_augmentation:
+  transpose_amounts: [-3, -2, -1, 0, 1, 2, 3]
+  stretch_factors: [0.95, 0.975, 1.0, 1.025, 1.05]

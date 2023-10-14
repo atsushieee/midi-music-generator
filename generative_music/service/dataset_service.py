@@ -7,6 +7,7 @@ The DatasetService class can be used to prepare the dataset
 for training and evaluation of neural network models.
 """
 from pathlib import Path
+from typing import List
 
 import yaml
 
@@ -36,6 +37,8 @@ class DatasetService:
         train_basename: str = "train",
         val_basename: str = "validation",
         test_basename: str = "test",
+        data_transpose_amounts: List[int] = [0],
+        data_stretch_factors: List[float] = [1.0],
     ):
         """Initialize the DatasetService instance.
 
@@ -49,15 +52,25 @@ class DatasetService:
             train_ratio (float): The ratio of the dataset to be used for training.
             val_ratio (float): The ratio of the dataset to be used for validation.
             test_ratio (float): The ratio of the dataset to be used for testing.
-            train_basename (str):
+            train_basename (str, optional):
                 The base name of the training file (without extension).
                 Default is "train".
-            val_basename (str):
+            val_basename (str, optional):
                 The base name of the validation file (without extension).
                 Default is "validation".
-            test_basename (str):
+            test_basename (str, optional):
                 The base name of the test file (without extension).
                 Default is "test".
+            data_transpose_amounts (List[int], optional):
+                A list of integer values to shift the pitch
+                of the MIDI files for data augmentation.
+                Each integer represents the number of semitones to shift.
+                Default is [0], meaning no shift.
+            data_stretch_factors (List[float], optional):
+                A list of float values to stretch or shrink the tempo
+                of the MIDI files for data augmentation.
+                Each float represents the factor by which to stretch the tempo.
+                Default is [1.0], meaning no change in tempo.
         """
         self.preparer = DatasetPreparer(
             data_dir,
@@ -69,6 +82,8 @@ class DatasetService:
             train_basename,
             val_basename,
             test_basename,
+            data_transpose_amounts,
+            data_stretch_factors,
         )
         self.tf_writer = MidiTFRecordsWriter()
         self.tfrecords_dir = tfrecords_dir
@@ -108,6 +123,8 @@ if __name__ == "__main__":
     train_ratio = config["ratios"]["train_ratio"]
     val_ratio = config["ratios"]["val_ratio"]
     test_ratio = config["ratios"]["test_ratio"]
+    data_transpose_amounts = config["data_augmentation"]["transpose_amounts"]
+    data_stretch_factors = config["data_augmentation"]["stretch_factors"]
 
     midi_config = Config()
 
@@ -122,5 +139,7 @@ if __name__ == "__main__":
         train_basename,
         val_basename,
         test_basename,
+        data_transpose_amounts,
+        data_stretch_factors,
     )
     dataset_service.process_and_write_tfrecords()

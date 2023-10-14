@@ -5,6 +5,7 @@ Source: https://github.com/YatingMusic/remi/blob/master/chord_recognition.py
 Author: Yu-Siang (Remy) Huang
 License: https://github.com/YatingMusic/remi/blob/master/LICENSE
 """
+from copy import deepcopy
 from typing import Dict, List, Tuple
 
 import miditoolkit
@@ -103,6 +104,33 @@ class ChordExtractor:
                 )
             )
         return output
+
+    def transpose_items(self, chord_items: List[Item], shift: int) -> List[Item]:
+        """Transpose the pitch of the chord items based on the shift value.
+
+        Args:
+            chord_items (List[Item]): The list of chord items to be transposed.
+            shift (int): The amount to shift the pitch of the chords.
+
+        Returns:
+            List[Item]: A list of transposed chord items.
+        """
+        transposed_items = deepcopy(chord_items)
+        for item in transposed_items:
+            if not isinstance(item.pitch, str):
+                continue
+            # Split the pitch into note and chord type
+            note, chord_type = item.pitch.split(":")
+            # Skip if note is 'N'
+            if note == "N":
+                continue
+            # Get the index of the current note in the pitch classes
+            index = self.midi_config.PITCH_CLASSES.index(note)
+            # Calculate the new index by adding the shift and wrapping around the list length
+            new_index = (index + shift) % len(self.midi_config.PITCH_CLASSES)
+            # Update the pitch of the item
+            item.pitch = self.midi_config.PITCH_CLASSES[new_index] + ":" + chord_type
+        return transposed_items
 
     def _note2pianoroll(
         self, notes: List[Item], max_tick: int, ticks_per_beat: int

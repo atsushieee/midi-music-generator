@@ -210,14 +210,14 @@ class Item2EventConverter:
                 item.start,
                 tempo - self.midi_config.DEFAULT_TEMPO_INTERVALS[2].start,
             )
-        elif tempo < self.midi_config.DEFAULT_TEMPO_INTERVALS[0].start:
+        elif tempo <= self.midi_config.DEFAULT_TEMPO_INTERVALS[0].start:
             tempo_style = Event(
                 EventName.TEMPO_CLASS,
                 item.start,
                 self.midi_config.DEFAULT_TEMPO_NAMES[0],
             )
             tempo_value = Event(EventName.TEMPO_VALUE, item.start, 0)
-        elif tempo > self.midi_config.DEFAULT_TEMPO_INTERVALS[2].stop:
+        elif tempo >= self.midi_config.DEFAULT_TEMPO_INTERVALS[2].stop:
             tempo_style = Event(
                 EventName.TEMPO_CLASS,
                 item.start,

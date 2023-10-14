@@ -190,8 +190,16 @@ if __name__ == "__main__":
     midi_data_dir = Path(cfg_dataset["paths"]["midi_data_dir"])
     train_ratio = cfg_dataset["ratios"]["train_ratio"]
     val_ratio = cfg_dataset["ratios"]["val_ratio"]
+    data_transpose_amounts = cfg_dataset["data_augmentation"]["transpose_amounts"]
+    data_stretch_factors = cfg_dataset["data_augmentation"]["stretch_factors"]
+
     epoch_steps_calculator = EpochStepsCalculator(
-        midi_data_dir, train_ratio, val_ratio, batch_size
+        midi_data_dir,
+        train_ratio,
+        val_ratio,
+        batch_size,
+        data_transpose_amounts,
+        data_stretch_factors,
     )
 
     # Tensorboard initialization
@@ -221,7 +229,7 @@ if __name__ == "__main__":
     # Instantiate the optimizer with a custom learning rate scheduler
     train_total_steps = epoch_steps_calculator.train_total_steps * epochs
     lr_scheduler = WarmupCosineDecayScheduler(
-        warmup_steps=8000, total_steps=train_total_steps
+        warmup_steps=int(train_total_steps * 0.2), total_steps=train_total_steps
     )
     optimizer = tf.keras.optimizers.Adam(learning_rate=lr_scheduler)
     data_loader = TrainDataLoader(

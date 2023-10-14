@@ -70,3 +70,25 @@ class TestChordExtractor:
             assert item.start == expected_start
             assert item.end == expected_end
             assert item.pitch == expected_pitch
+
+    def test_transpose_items(self):
+        """Test if the chord items are correctly transposed and match the expected values.
+
+        This test checks the number of transposed chord items
+        and the consistency between the expected transposed chord items
+        (start, end, pitch) and the actual transposed chord items.
+        """
+        chord_items = self.chord_extractor.extract(self.test_note_items)
+        transposed_chord_items = self.chord_extractor.transpose_items(chord_items, -2)
+        expected_chord_items = [
+            (0, 1920, "A#:maj"),
+            (1920, 2880, "C:min"),
+            (2880, 3840, "F:dim"),
+            (3840, 5760, "D:dom"),
+        ]
+        for chord_item, (expected_start, expected_end, expected_pitch) in zip(
+            transposed_chord_items, expected_chord_items
+        ):
+            assert chord_item.start == expected_start
+            assert chord_item.end == expected_end
+            assert chord_item.pitch == expected_pitch

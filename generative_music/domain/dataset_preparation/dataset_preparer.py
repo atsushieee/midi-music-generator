@@ -4,6 +4,8 @@ from typing import List, Tuple
 
 from tqdm import tqdm
 
+from generative_music.domain.dataset_preparation.data_augmented_param_generator import \
+    DataAugmentedParamGenerator
 from generative_music.domain.dataset_preparation.dataset_splitter import \
     DatasetSplitter
 from generative_music.domain.midi_data_processor.midi_representation import \
@@ -32,6 +34,8 @@ class DatasetPreparer:
         train_basename: str = "train",
         val_basename: str = "validation",
         test_basename: str = "test",
+        data_transpose_amounts: List[int] = [0],
+        data_stretch_factors: List[float] = [1.0],
     ):
         """Initialize the DatasetPreparer instance.
 
@@ -43,15 +47,25 @@ class DatasetPreparer:
             train_ratio (float): The ratio of the dataset to be used for training.
             val_ratio (float): The ratio of the dataset to be used for validation.
             test_ratio (float): The ratio of the dataset to be used for testing.
-            train_basename (str):
+            train_basename (str, optional):
                 The base name of the training file (without extension).
                 Default is "train".
-            val_basename (str):
+            val_basename (str, optional):
                 The base name of the validation file (without extension).
                 Default is "validation".
-            test_basename (str):
+            test_basename (str, optional):
                 The base name of the test file (without extension).
                 Default is "test".
+            data_transpose_amounts (List[int], optional):
+                A list of integer values to shift the pitch
+                of the MIDI files for data augmentation.
+                Each integer represents the number of semitones to shift.
+                Default is [0], meaning no shift.
+            data_stretch_factors (List[float], optional):
+                A list of float values to stretch or shrink the tempo
+                of the MIDI files for data augmentation.
+                Each float represents the factor by which to stretch the tempo.
+                Default is [1.0], meaning no change in tempo.
         """
         self.splitter = DatasetSplitter(
             data_dir,
@@ -67,6 +81,12 @@ class DatasetPreparer:
         self.train_basename = train_basename
         self.val_basename = val_basename
         self.test_basename = test_basename
+        # Initialize the tokenizer
+        self.tokenizer = Tokenizer(self.midi_config)
+        # Initialize the data augmentor
+        self.data_augmented_param_generator = DataAugmentedParamGenerator(
+            data_transpose_amounts, data_stretch_factors
+        )
 
     def prepare(self) -> Tuple[List[List[int]], List[List[int]], List[List[int]]]:
         """Split the MIDI files into train, validation and test datasets, and tokenize.
@@ -103,10 +123,24 @@ class DatasetPreparer:
             List[List[int]]: A list of tokenized events for each MIDI file.
         """
         tokenized_data = []
-        tokenizer = Tokenizer(self.midi_config)
         for filepath in tqdm(filepaths, desc=f"Processing {split} MIDI files"):
             preprocessor = Preprocessor(Path(filepath), self.midi_config)
-            events = preprocessor.process()
-            tokenized_events = [tokenizer.tokenize(event) for event in events]
-            tokenized_data.append(tokenized_events)
+            # data augmentation only in the case of training
+            if split == self.train_basename:
+                for (
+                    shift,
+                    stretch,
+                ) in self.data_augmented_param_generator.generate():
+                    events = preprocessor.generate_events(
+                        is_augmented=True, shift=shift, stretch=stretch
+                    )
+                    tokenized_events = [
+                        self.tokenizer.tokenize(event) for event in events
+                    ]
+                    tokenized_data.append(tokenized_events)
+            else:
+                events = preprocessor.generate_events()
+                tokenized_events = [self.tokenizer.tokenize(event) for event in events]
+                tokenized_data.append(tokenized_events)
+
         return tokenized_data

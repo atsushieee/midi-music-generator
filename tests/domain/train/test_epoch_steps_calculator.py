@@ -29,8 +29,15 @@ class TestEpochStepsCalculator:
         train_ratio = 0.7
         val_ratio = 0.2
         batch_size = 2
+        transpose_amounts = [-1, 0, 1]
+        stretch_factors = [0.95, 1.0, 1.05]
         self.epoch_steps_calculator = EpochStepsCalculator(
-            midi_data_dir, train_ratio, val_ratio, batch_size
+            midi_data_dir,
+            train_ratio,
+            val_ratio,
+            batch_size,
+            transpose_amounts,
+            stretch_factors,
         )
 
     def test_count_midi_files(self):
@@ -47,7 +54,7 @@ class TestEpochStepsCalculator:
         This test checks the total steps
         and verifies if it matches the expected value.
         """
-        assert self.epoch_steps_calculator._calculate_total_steps(0.8) == 4
+        assert self.epoch_steps_calculator._calculate_total_steps(0.8) == 36
 
     def test_train_total_steps(self):
         """Test if the total steps for training are correctly calculated.
@@ -55,7 +62,7 @@ class TestEpochStepsCalculator:
         This test checks the total steps for training
         and verifies if it matches the expected value.
         """
-        assert self.epoch_steps_calculator.train_total_steps == 4
+        assert self.epoch_steps_calculator.train_total_steps == 32
 
     def test_val_total_steps(self):
         """Test if the total steps for validation are correctly calculated.

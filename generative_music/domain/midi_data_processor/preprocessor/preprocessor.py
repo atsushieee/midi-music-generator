@@ -1,9 +1,10 @@
 """A module for preprocessing midi data."""
+import copy
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 from generative_music.domain.midi_data_processor.midi_representation import (
-    Config, Event)
+    Config, Event, Item)
 from generative_music.domain.midi_data_processor.preprocessor.chord_extractor import \
     ChordExtractor
 from generative_music.domain.midi_data_processor.preprocessor.item2event_converter import \
@@ -31,27 +32,43 @@ class Preprocessor:
         """
         self.midi_file_path = midi_file_path
         self.midi_config = midi_config
+        # Initialize DataLoader, ChordExtractor
+        self._load_midi_original_note_and_tempo()
 
-    def process(self) -> List[Event]:
-        """Process the MIDI file and generate a list of events.
+    def generate_events(
+        self, is_augmented: bool = False, shift: int = 0, stretch: float = 1.0
+    ) -> List[Event]:
+        """Generate a list of events from the MIDI data.
 
-        This method reads and processes note and tempo items from the MIDI file,
+        This method applies pitch shift and tempo stretching if specified,
         extracts chords from note items, combines note, chord and tempo items,
         and converts the combined items to events.
+
+        Args:
+            is_augmented (bool, optional):
+                Whether to apply data augmentation. Defaults to False.
+            shift (int, optional):
+                The amount to shift the pitch of the notes.
+                Positive values shift the pitch up, while negative values shift it down.
+                Defaults to 0, meaning no shift.
+            stretch (float, optional):
+                The factor by which to stretch or shrink the tempo.
+                Values greater than 1.0 will speed up the tempo,
+                while values less than 1.0 will slow it down.
+                Defaults to 1.0, meaning no change in tempo.
 
         Returns:
             List[Event]: A list of events generated from the MIDI file.
         """
-        # Initialize DataLoader, ChordExtractor, and Item2EventConverter
-        data_loader = MidiDataLoader(self.midi_file_path, self.midi_config)
-        chord_extractor = ChordExtractor(self.midi_config)
-
-        # Read and process notes and tempo items
-        note_items = data_loader.read_note_items()
-        tempo_items = data_loader.read_tempo_items()
-
-        # Extract chords from note items
-        chord_items = chord_extractor.extract(note_items)
+        note_items = self.note_items
+        tempo_items = self.tempo_items
+        chord_items = self.chord_items
+        # If is_augmented is True,
+        # apply augmentation to the note, tempo and chord items
+        if is_augmented and (shift != 0 or stretch != 1.0):
+            note_items, tempo_items, chord_items = self._apply_augmentation(
+                shift, stretch
+            )
 
         # Combine note, chord, and tempo items
         combined_items = tempo_items + chord_items + note_items
@@ -68,3 +85,82 @@ class Preprocessor:
         events = item2event_converter.convert_items_to_events()
 
         return events
+
+    def _load_midi_original_note_and_tempo(self):
+        """Load note and tempo data from the MIDI file.
+
+        This method reads note and tempo items from the MIDI file
+        and stores them internally.
+        """
+        data_loader = MidiDataLoader(self.midi_file_path, self.midi_config)
+        # Read notes and tempo items
+        self.note_items = data_loader.read_note_items()
+        self.tempo_items = data_loader.read_tempo_items()
+        # Extract chords from note items
+        self.chord_extractor = ChordExtractor(self.midi_config)
+        self.chord_items = self.chord_extractor.extract(self.note_items)
+
+    def _apply_augmentation(
+        self, shift: int, stretch: float
+    ) -> Tuple[List[Item], List[Item], List[Item]]:
+        """Apply pitch shift and tempo stretching to the note, tempo and chord items.
+
+        Args:
+            shift (int):
+                The amount to shift the pitch of the notes.
+                Positive values shift the pitch up, while negative values shift it down.
+            stretch (float):
+                The factor by which to stretch or shrink the tempo.
+                Values greater than 1.0 will speed up the tempo,
+                while values less than 1.0 will slow it down.
+
+        Returns:
+            Tuple[List[Item], List[Item], List[Item]]:
+                A tuple of a list of note items
+                and a list of tempo items and a list of chord items.
+        """
+        note_items, chord_items = self._apply_shift(shift)
+        tempo_items = self._apply_stretch(stretch)
+
+        return note_items, tempo_items, chord_items
+
+    def _apply_shift(self, shift: int) -> Tuple[List[Item], List[Item]]:
+        """Apply pitch shift to the note and chord items.
+
+        If the shift is 0, it returns the copied note and chord items without any changes.
+
+        Args:
+            shift (int): The amount to shift the pitch of the notes and chords.
+
+        Returns:
+            Tuple[List[Item], List[Item]]:
+                A tuple of a list of shifted note items and a list of shifted chord items.
+        """
+        note_items = copy.deepcopy(self.note_items)
+        chord_items = copy.deepcopy(self.chord_items)
+        if shift == 0:
+            return note_items, chord_items
+        for note_item in note_items:
+            if isinstance(note_item.pitch, int):
+                note_item.pitch = note_item.pitch + shift
+        chord_items = self.chord_extractor.transpose_items(chord_items, shift)
+        return note_items, chord_items
+
+    def _apply_stretch(self, stretch: float) -> List[Item]:
+        """Apply tempo stretching to the tempo items.
+
+        If the stretch is 1.0, it returns the copied tempo items without any changes.
+
+        Args:
+            stretch (float): The factor by which to stretch or shrink the tempo.
+
+        Returns:
+            List[Item]: A list of stretched tempo items.
+        """
+        tempo_items = copy.deepcopy(self.tempo_items)
+        if stretch == 1.0:
+            return tempo_items
+        for tempo_item in tempo_items:
+            if isinstance(tempo_item.tempo, int):
+                tempo_item.tempo = round(tempo_item.tempo * stretch)
+        return tempo_items

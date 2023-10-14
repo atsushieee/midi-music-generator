@@ -34,13 +34,13 @@ class TestPreprocessor:
         test_midi_obj.dump(str(self.test_midi_filepath))
         self.preprocessor = Preprocessor(self.test_midi_filepath, Config())
 
-    def test_process(self):
+    def test_generate_events(self):
         """Test if the Preprocessor's process method generates the correct events.
 
         This test checks if the process method generates a list of events
         with the expected events including BAR, POSITION, NOTE_ON, CHORD, and TEMPO_CLASS events.
         """
-        events = self.preprocessor.process()
+        events = self.preprocessor.generate_events()
 
         assert events is not None
         assert len(events) > 0
@@ -65,3 +65,31 @@ class TestPreprocessor:
         assert len(note_on_events) > 0
         assert len(chord_events) > 0
         assert len(tempo_events) > 0
+
+    def test_apply_shift(self):
+        """Test if the _apply_shift method correctly shifts the pitch of the notes and chords.
+
+        This test checks the number of shifted note items and the consistency
+        between the expected shifted items (start, end, pitch) and the actual shifted items.
+        """
+        shifted_note_items, shifted_chord_items = self.preprocessor._apply_shift(2)
+        assert all(
+            item.pitch == original_item.pitch + 2
+            for item, original_item in zip(
+                shifted_note_items, self.preprocessor.note_items
+            )
+        )
+
+    def test_apply_stretch(self):
+        """Test if the _apply_stretch method correctly stretches the tempo of the items.
+
+        This test checks the number of stretched tempo items and the consistency
+        between the expected stretched items (start, end, tempo) and the actual stretched items.
+        """
+        stretched_tempo_items = self.preprocessor._apply_stretch(1.5)
+        assert all(
+            item.tempo == round(original_item.tempo * 1.5)
+            for item, original_item in zip(
+                stretched_tempo_items, self.preprocessor.tempo_items
+            )
+        )
