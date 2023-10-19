@@ -39,9 +39,18 @@ $ make token-mapping
 1. Download the MIDI data from [this link](https://github.com/YatingMusic/remi/tree/master#obtain-the-midi-data).
 2. Move the train directory located inside the downloaded data directory to `generative_music/data`.
 3. Rename the folder from `train` to `midis`.
-4. Execute the following command.
+4. Before proceeding, adjust certain parameters in the [dataset.yml](generative_music/config/dataset.yml) file as needed:
+   - `ratios`:
+     - These values determine the split ratio of the dataset into training, validation, and testing sets.
+     - For example, a `train_ratio` of 0.8 means that 80% of the data will be used for training.
+   - `data_augmentation`:
+     - This section contains parameters for data augmentation.
+     - `transpose_amounts` are the semitone shifts to be applied for transposition.
+     - `stretch_factors` are the factors by which the tempo of the music will be stretched.
+     > Note that the dataset will be augmented by multiplying the number of original MIDI files by the product of the lengths of `transpose_amounts` and `stretch_factors`.
+5. Execute the following command.
 ```bash
-# create the CSV file the TensorFlow records for dataset split (train/val/test)
+# create the CSV file, the tfrecords, and split the dataset into train/val/test
 $ make dataset
 ```
 
