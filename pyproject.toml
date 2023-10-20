@@ -8,6 +8,7 @@ packages = [{include = "generative_music"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9.0,<3.10.0"
+tensorflow-io-gcs-filesystem = "0.31.0"
 tensorflow = ">=2.8.0,<2.9.0"
 numpy = "1.23.5"
 miditoolkit = "^0.1.16"
