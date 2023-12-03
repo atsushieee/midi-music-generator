@@ -11,6 +11,7 @@ from generative_music.domain.train.learning_rate_schedulers import \
     WarmupCosineDecayScheduler
 from generative_music.domain.train.losses import \
     LabelSmoothedCategoricalCrossentropy
+from generative_music.domain.train.metrics import GroupwiseLossMetrics
 from generative_music.domain.train.train_data_loader import TrainDataLoader
 from generative_music.domain.train.train_step import TrainStep
 
@@ -20,4 +21,5 @@ __all__ = [
     "TrainStep",
     "TrainDataLoader",
     "EpochStepsCalculator",
+    "GroupwiseLossMetrics",
 ]

@@ -9,7 +9,7 @@ import argparse
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional, Tuple
 
 import tensorflow as tf
 import yaml
@@ -17,8 +17,9 @@ from tqdm import tqdm
 
 from generative_music.domain.model.transformer import Decoder
 from generative_music.domain.train import (
-    EpochStepsCalculator, LabelSmoothedCategoricalCrossentropy,
-    TrainDataLoader, TrainStep, WarmupCosineDecayScheduler)
+    EpochStepsCalculator, GroupwiseLossMetrics,
+    LabelSmoothedCategoricalCrossentropy, TrainDataLoader, TrainStep,
+    WarmupCosineDecayScheduler)
 from generative_music.infrastructure.model_storage import CheckpointManager
 from generative_music.infrastructure.tensorboard import TensorboardWriter
 
@@ -38,9 +39,11 @@ class TrainService:
         optimizer: tf.keras.optimizers.Optimizer,
         data_loader: TrainDataLoader,
         epochs: int,
+        tensorboard_dir: str,
         checkpoint_dir: str,
         epoch_steps_calculator: EpochStepsCalculator,
-        tensorboard_writer: TensorboardWriter,
+        events_loss: GroupwiseLossMetrics,
+        cfg_model: Dict[str, Any],
     ):
         """Initialize the TrainService instance.
 
@@ -52,14 +55,16 @@ class TrainService:
             data_loader (TrainDataLoader):
                 The DataLoader instance for loading training and validation data.
             epochs (int): The number of epochs for training the model.
+            tensorboard_dir (str):
+                The directory where the tensorboard will be saved.
             checkpoint_dir (str):
                 The directory where the checkpoints will be saved.
             epoch_steps_calculator (EpochStepsCalculator):
                 The instance used to calculate the total steps
                 needed for each epoch of training and validation.
-            tensorboard_writer (TensorboardWriter):
-                The TensorboardWriter instance for writing scalar values
-                and hyperparameters to TensorBoard logs.
+            events_loss (GroupwiseLossMetrics): The total loss for each group.
+            cfg_model (Dict[str, Any]):
+                A dictionary containing the configuration parameters for the model.
         """
         self.train_step = TrainStep(model, loss, optimizer)
         self.model = model
@@ -72,7 +77,14 @@ class TrainService:
         self.start_epoch = self.checkpoint_manager.get_epoch()
         self.train_total_steps = epoch_steps_calculator.train_total_steps
         self.val_total_steps = epoch_steps_calculator.val_total_steps
-        self.tensorboard_writer = tensorboard_writer
+        self.events_loss = events_loss
+        self.tensorboard_dir = tensorboard_dir
+        self.cfg_model = cfg_model
+        (
+            self.tensorboard_train_writer,
+            self.tensorboard_val_writer,
+            self.tensorboard_events_writers,
+        ) = self._create_tensorboards()
 
     def train(self):
         """Train and validate the model for a certain number of epochs.
@@ -89,6 +101,57 @@ class TrainService:
             val_loss = self._run_epoch(self.val_data, epoch + 1)
             print(f"  - valid loss: {val_loss:.4f}")
             self.checkpoint_manager.save(epoch + 1)
+
+    def _create_tensorboards(
+        self,
+    ) -> Tuple[TensorboardWriter, TensorboardWriter, List[TensorboardWriter]]:
+        """Create tensorboards for the training and validation phases.
+
+        This method creates separate TensorboardWriter instances for the training phase,
+        validation phase, and for each event in the events_loss attribute.
+
+        Returns:
+            TensorboardWriter:
+                The TensorboardWriter instance for writing scalar values
+                and hyperparameters to TensorBoard logs for training.
+            TensorboardWriter:
+                The TensorboardWriter instance for writing scalar values
+                to TensorBoard logs for validation.
+            List[TensorboardWriter]:
+                A list of TensorboardWriter instances for writing scalar values
+                to TensorBoard logs for each event in the events_loss attribute.
+        """
+        tensorboard_train_writer = self._create_tensorboard_writer(
+            "train", self.cfg_model
+        )
+        tensorboard_val_writer = self._create_tensorboard_writer("val")
+        tensorboard_events_writers = [
+            self._create_tensorboard_writer(event_name)
+            for event_name in self.events_loss.event_names
+        ]
+        return (
+            tensorboard_train_writer,
+            tensorboard_val_writer,
+            tensorboard_events_writers,
+        )
+
+    def _create_tensorboard_writer(
+        self, sub_dir: str, hyperparameters: Optional[Dict[str, int]] = None
+    ) -> TensorboardWriter:
+        """Create a TensorboardWriter instance.
+
+        Args:
+            sub_dir (str): Subdirectory for the Tensorboard logs.
+            hyperparameters (Dict[str, Any], optional):
+                A dictionary containing the configuration parameters for the model.
+                Deault is None.
+
+        Returns:
+            TensorboardWriter: The TensorboardWriter instance.
+        """
+        return TensorboardWriter(
+            f"{self.tensorboard_dir}/{sub_dir}", hyperparameters=hyperparameters
+        )
 
     def _run_epoch(self, data, epoch: int, is_training=False) -> float:
         """Run one epoch of training or validation.
@@ -110,27 +173,64 @@ class TrainService:
             dynamic_ncols=True,
         )
         for x_batch, y_batch, mask in progress_bar:
-            if is_training:
-                loss_value = self.train_step(x_batch, y_batch, mask, is_training)
-                # The numpy() method is used to convert the scalar tensor value
-                # to a standard Python numeric type.
-                step_num = self.optimizer.iterations.numpy()
-                current_lr = self.optimizer.learning_rate(step_num)
-                self.tensorboard_writer.write_scalar(
-                    "learning_rate", current_lr, step_num
-                )
-            else:
-                y_pred = self.model(x_batch)
-                loss_value = self.loss(y_batch, y_pred)
+            y_pred, loss_value = self._compute_loss(x_batch, y_batch, mask, is_training)
+            self.events_loss.update_state(y_batch, y_pred)
             total_loss += loss_value
             total_steps += 1
             progress_bar.set_postfix(
                 {"loss": total_loss.numpy() / total_steps}, refresh=True
             )
         progress_bar.close()
-        loss_name = "train/loss" if is_training else "val/loss"
-        self.tensorboard_writer.write_scalar(loss_name, total_loss / total_steps, epoch)
+        average_loss = total_loss / total_steps
+        self._write_tensorboard(average_loss, epoch, is_training)
+
+        event_loss_name = "loss/events_train" if is_training else "loss/events_val"
+        total_group_losses = self.events_loss.result(total_steps)
+        for i in range(self.events_loss.num_groups - 1):
+            self.tensorboard_events_writers[i].write_scalar(
+                event_loss_name, total_group_losses[i], epoch
+            )
+        self.events_loss.reset_states()
         return total_loss / total_steps
+
+    def _compute_loss(
+        self, x_batch: tf.Tensor, y_batch: tf.Tensor, mask: tf.Tensor, is_training: bool
+    ) -> Tuple[tf.Tensor, tf.Tensor]:
+        """Compute the loss for the given batch.
+
+        Args:
+            x_batch (tf.Tensor): The input batch.
+            y_batch (tf.Tensor): The target batch.
+            mask (tf.Tensor): The mask for the batch.
+            is_training (bool): Whether the model is in training mode.
+
+        Returns:
+            Tuple[tf.Tensor, tf.Tensor]: The predictions and the computed loss.
+        """
+        if is_training:
+            y_pred, loss_value = self.train_step(x_batch, y_batch, mask, is_training)
+            step_num = self.optimizer.iterations.numpy()
+            current_lr = self.optimizer.learning_rate(step_num)
+            self.tensorboard_train_writer.write_scalar(
+                "learning_rate", current_lr, step_num
+            )
+        else:
+            y_pred = self.model(x_batch)
+            loss_value = self.loss(y_batch, y_pred)
+        return y_pred, loss_value
+
+    def _write_tensorboard(self, average_loss: float, epoch: int, is_training: bool):
+        """Write the average loss to the appropriate TensorBoard.
+
+        Args:
+            average_loss (float): The average loss to write.
+            epoch (int): The current epoch.
+            is_training (bool): Whether the model is in training mode.
+        """
+        if is_training:
+            self.tensorboard_train_writer.write_scalar("loss", average_loss, epoch)
+            return
+        self.tensorboard_val_writer.write_scalar("loss", average_loss, epoch)
 
 
 def load_config(config_path: str) -> Dict[str, Any]:
@@ -211,7 +311,6 @@ if __name__ == "__main__":
     if args.resumed_dir:
         tensorboard_dir = f"{tensorboard_base_dir}/{args.resumed_dir}"
         ckpt_dir = f"{ckpt_base_dir}/{args.resumed_dir}"
-    tensorboard_writer = TensorboardWriter(tensorboard_dir, hyperparameters=cfg_model)
 
     # Load the JSON file
     json_data = load_json("generative_music/data/event2id.json")
@@ -224,9 +323,12 @@ if __name__ == "__main__":
     )
     # Instantiate the loss
     loss = LabelSmoothedCategoricalCrossentropy(
-        masked_id=vocab_size, vocab_size=vocab_size
+        masked_id=vocab_size - 1, vocab_size=vocab_size
     )
+    events_loss = GroupwiseLossMetrics(vocab_size - 1, vocab_size, json_data)
     # Instantiate the optimizer with a custom learning rate scheduler
+    # Here, the masked_id is set to vocab_size - 1, because the IDs are assigned
+    # sequentially from 0 and the last ID is vocab_size - 1.
     train_total_steps = epoch_steps_calculator.train_total_steps * epochs
     lr_scheduler = WarmupCosineDecayScheduler(
         warmup_steps=int(train_total_steps * 0.2), total_steps=train_total_steps
@@ -248,8 +350,10 @@ if __name__ == "__main__":
         optimizer,
         data_loader,
         epochs,
+        tensorboard_dir,
         ckpt_dir,
         epoch_steps_calculator,
-        tensorboard_writer,
+        events_loss,
+        cfg_model,
     )
     train_service.train()
